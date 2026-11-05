@@ -114,7 +114,8 @@ export default function App() {
           scrollTrigger: {
             trigger: ".hero",
             start: "top top",
-            end: "+=340%",
+            end: () =>
+              `+=${window.innerHeight * (window.innerWidth < 768 ? 2.2 : 2.8)}`,
             scrub: 1,
             pin: true,
             anticipatePin: 1,
