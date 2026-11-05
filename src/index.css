@@ -53,7 +53,7 @@ h2 { font-family: var(--serif); font-size: clamp(58px, 9.8vw, 190px); font-weigh
 .hero-intro > p { position: absolute; top: 52%; right: 5vw; color: var(--green); font-size: clamp(16px, 1.3vw, 32px); text-align: right; }
 .hero-intro > .button { position: absolute; top: 57%; right: 5vw; }
 .hero-coconut { position: absolute; top: 61%; left: 50%; width: clamp(160px, 21vw, 430px); height: auto; object-fit: contain; transform: translateX(-50%); mix-blend-mode: multiply; }
-.hero-reveal { position: absolute; z-index: 4; top: 66%; left: 48%; width: 10vw; min-width: 90px; pointer-events: none; }
+.hero-reveal { position: absolute; z-index: 4; top: 66%; left: 48%; width: 10vw; min-width: 90px; pointer-events: none; transform-origin: 50% 50%; will-change: transform; }
 
 .products { padding-block: clamp(100px, 12vw, 280px) clamp(80px, 8vw, 190px); }
 .section-head { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: clamp(55px, 7vw, 150px); }

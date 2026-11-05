@@ -101,8 +101,8 @@ export default function App() {
   useLayoutEffect(() => {
     if (!root.current) return
     const context = gsap.context(() => {
-      const hero = gsap.timeline({ repeat: -1, repeatDelay: 0.8 })
-      hero
+      const heroEntrance = gsap.timeline()
+      heroEntrance
         .fromTo(".hero-title .line", { yPercent: 115 }, {
           yPercent: 0,
           duration: 0.85,
@@ -129,17 +129,26 @@ export default function App() {
           repeat: 1,
           ease: "sine.inOut",
         })
-        .to(
-          ".hero-reveal",
-          { scale: 14, y: 520, duration: 1.4, ease: "power4.inOut" },
-          1.75,
-        )
-        .to(
-          ".hero-intro",
-          { y: -260, opacity: 0, duration: 1.1, ease: "power4.inOut" },
-          1.75,
-        )
-        .set([".hero-reveal", ".hero-intro"], { clearProps: "all" })
+
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: ".hero",
+            start: "top top",
+            end: "+=120%",
+            scrub: 1,
+            pin: true,
+            anticipatePin: 1,
+          },
+        })
+        .fromTo(".hero-reveal", { scale: 1, xPercent: 0, y: 0 }, {
+          scale: 14,
+          xPercent: 8,
+          y: 520,
+          ease: "none",
+        })
+        .to(".hero-intro", { y: -260, opacity: 0, ease: "none" }, 0)
+        .to(".hero-palms", { scale: 1.08, ease: "none" }, 0)
 
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
         gsap.from(element, {
