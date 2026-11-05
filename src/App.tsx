@@ -347,13 +347,12 @@ export default function App() {
               alt="A coconut grower resting in a plantation"
             />
             <div className="hero-plantation-shade" />
-            <div className="hero-coconut-mask" aria-hidden="true">
-              <img
-                className="hero-coconut-mask-art"
-                src={`${A}/5b5d5.svg`}
-                alt=""
-              />
-            </div>
+            <img
+              className="hero-coconut-mask"
+              src={`${A}/coconut-mask.png`}
+              alt=""
+              aria-hidden="true"
+            />
             <div className="hero-final-copy">
               <p>
                 At <strong>Jeya Greens &amp; Co</strong>, every great product
