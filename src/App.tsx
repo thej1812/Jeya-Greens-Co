@@ -101,6 +101,8 @@ export default function App() {
   useLayoutEffect(() => {
     if (!root.current) return
     const context = gsap.context(() => {
+      gsap.set(".hero-coconut-stage", { xPercent: -50 })
+
       const heroEntrance = gsap.timeline()
       heroEntrance
         .fromTo(".hero-title .line", { yPercent: 115 }, {
@@ -135,20 +137,31 @@ export default function App() {
           scrollTrigger: {
             trigger: ".hero",
             start: "top top",
-            end: "+=120%",
-            scrub: 1,
+            end: "+=220%",
+            scrub: true,
             pin: true,
             anticipatePin: 1,
+            invalidateOnRefresh: true,
           },
         })
-        .fromTo(".hero-reveal", { scale: 1, xPercent: 0, y: 0 }, {
-          scale: 14,
-          xPercent: 8,
-          y: 520,
+        .to(".hero-coconut-stage", {
+          top: 0,
+          left: 0,
+          xPercent: 0,
+          width: "100vw",
+          height: "100svh",
+          scale: 1.01,
+          duration: 1,
           ease: "none",
         })
         .to(".hero-intro", { y: -260, opacity: 0, ease: "none" }, 0)
-        .to(".hero-palms", { scale: 1.08, ease: "none" }, 0)
+        .to(".hero-coconut", { scale: 1.06, duration: 1, ease: "none" }, 0)
+        .to(".hero-palms", { scale: 1.08, duration: 1, ease: "none" }, 0)
+        .to(".hero-coconut", {
+          scale: 1.08,
+          duration: 1.25,
+          ease: "none",
+        })
 
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
         gsap.from(element, {
@@ -243,13 +256,14 @@ export default function App() {
             <a className="button button--green" href="#products">
               Shop Now
             </a>
+          </div>
+          <div className="hero-coconut-stage">
             <img
               className="hero-coconut"
               src={`${A}/58600.png`}
               alt="Coconut sweets"
             />
           </div>
-          <img className="hero-reveal" src={`${A}/5b5d5.svg`} alt="" />
         </section>
 
         <section id="products" className="products section-pad">
