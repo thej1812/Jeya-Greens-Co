@@ -105,6 +105,11 @@ export default function App() {
   useLayoutEffect(() => {
     if (!root.current) return
     const context = gsap.context(() => {
+      gsap.set(".hero-coconut-mask", {
+        force3D: true,
+        transformOrigin: "50% 24%",
+      })
+
       const heroEntrance = gsap.timeline()
       heroEntrance.fromTo(".hero-title .line", { yPercent: 115 }, {
         yPercent: 0,
@@ -342,14 +347,13 @@ export default function App() {
               alt="A coconut grower resting in a plantation"
             />
             <div className="hero-plantation-shade" />
-            <svg
-              className="hero-coconut-mask"
-              viewBox="0 0 2564 1709"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <use href={`${A}/5b5d5.svg#Subtract`} />
-            </svg>
+            <div className="hero-coconut-mask" aria-hidden="true">
+              <img
+                className="hero-coconut-mask-art"
+                src={`${A}/5b5d5.svg`}
+                alt=""
+              />
+            </div>
             <div className="hero-final-copy">
               <p>
                 At <strong>Jeya Greens &amp; Co</strong>, every great product
