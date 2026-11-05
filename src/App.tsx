@@ -342,14 +342,7 @@ export default function App() {
               alt="A coconut grower resting in a plantation"
             />
             <div className="hero-plantation-shade" />
-            <svg
-              className="hero-coconut-mask"
-              viewBox="0 0 2564 1709"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <use href={`${A}/5b5d5.svg#Subtract`} />
-            </svg>
+            <img className="hero-coconut-mask" src={`${A}/5b5d5.svg`} alt="" />
             <div className="hero-final-copy">
               <p>
                 At <strong>Jeya Greens &amp; Co</strong>, every great product
