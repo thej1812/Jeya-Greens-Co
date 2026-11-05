@@ -18,7 +18,7 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
-  body { background: var(--cream); color: var(--green); font-family: var(--sans); overflow-x: hidden; }
+  body { background: var(--cream); color: var(--green); font-family: 'Suisse Intl Trial', Inter, Arial, sans-serif; overflow-x: hidden; }
   button, a { -webkit-tap-highlight-color: transparent; }
   button { cursor: pointer; }
   img { display: block; }
