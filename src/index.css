@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @import 'tailwindcss';
 
 @font-face {
@@ -12,7 +12,7 @@
   --cream: #fdffe2;
   --green: #007b5f;
   --ink: #343434;
-  --serif: 'DM Serif Display', Georgia, serif;
+  --serif: 'Roslindale', Georgia, serif;
   --sans: Inter, Arial, sans-serif;
 }
 
