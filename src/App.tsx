@@ -375,58 +375,62 @@ export default function App() {
             </div>
           </div>
         </section>
+<section id="products" className="products section-pad">
+  <div className="section-head" data-reveal>
+    <h2>
+      Plants That
+      <br />
+      Make You Smile
+    </h2>
 
-        <section id="products" className="products section-pad">
-          <div className="section-head" data-reveal>
-            <h2>
-              Plants That
-              <br />
-              Make You Smile
-            </h2>
-            <a className="button button--green" href="#product-grid">
-              Shop Now
-            </a>
+    <div className="split-wrap">
+      <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
+        <button
+          className="split-main"
+          onClick={() => setCategoryOpen(!categoryOpen)}
+        >
+          Categories
+        </button>
+
+        <button
+          className="split-toggle"
+          onClick={() => setCategoryOpen(!categoryOpen)}
+          aria-expanded={categoryOpen}
+          aria-label="Open categories"
+        >
+          <ArrowIcon />
+        </button>
+
+        {categoryOpen && (
+          <div className="category-menu">
+            <a href="#product-grid">Traditional sweets</a>
+            <a href="#product-grid">Coconut oils</a>
+            <a href="#product-grid">Fresh drinks</a>
           </div>
-          <div id="product-grid" className="product-grid">
-            {products.map((product, index) => (
-              <article className="product-card" data-reveal key={product.name}>
-                <img src={`${A}/${product.image}`} alt={product.name} />
-                <div className="product-gradient" />
-                <span className="product-tag">{product.type}</span>
-                <div className="product-copy">
-                  <span>Organic</span>
-                  <h3>{product.name}</h3>
-                </div>
-                <span className="product-index">0{index + 1}</span>
-              </article>
-            ))}
-          </div>
-          <div className="split-wrap">
-            <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
-              <button
-                className="split-main"
-                onClick={() => setCategoryOpen(!categoryOpen)}
-              >
-                Categories
-              </button>
-              <button
-                className="split-toggle"
-                onClick={() => setCategoryOpen(!categoryOpen)}
-                aria-expanded={categoryOpen}
-                aria-label="Open categories"
-              >
-                <ArrowIcon />
-              </button>
-              {categoryOpen && (
-                <div className="category-menu">
-                  <a href="#product-grid">Traditional sweets</a>
-                  <a href="#product-grid">Coconut oils</a>
-                  <a href="#product-grid">Fresh drinks</a>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <div id="product-grid" className="product-grid">
+    {products.map((product, index) => (
+      <article className="product-card" data-reveal key={product.name}>
+        <img src={`${A}/${product.image}`} alt={product.name} />
+
+        <div className="product-gradient" />
+
+        <span className="product-tag">{product.type}</span>
+
+        <div className="product-copy">
+          <span>Organic</span>
+          <h3>{product.name}</h3>
+        </div>
+
+        <span className="product-index">0{index + 1}</span>
+      </article>
+    ))}
+  </div>
+</section>
 
         <div className="ticker" aria-hidden="true">
           <div className="ticker-track">
