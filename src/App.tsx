@@ -282,9 +282,6 @@ export default function App() {
                 <img src={`${A}/${product.image}`} alt={product.name} />
                 <div className="product-gradient" />
                 <span className="product-tag">{product.type}</span>
-                <button className="heart" aria-label={`Save ${product.name}`}>
-                  <img src={`${A}/c9e65.svg`} alt="" />
-                </button>
                 <div className="product-copy">
                   <span>Organic</span>
                   <h3>{product.name}</h3>
