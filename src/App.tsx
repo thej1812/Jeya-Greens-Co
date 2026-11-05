@@ -105,9 +105,14 @@ export default function App() {
   useLayoutEffect(() => {
     if (!root.current) return
     const context = gsap.context(() => {
+      const getMaskStartScale = () =>
+        window.innerWidth <= 600 ? 1.35 : window.innerWidth <= 900 ? 1.2 : 1
+
       gsap.set(".hero-coconut-mask", {
         force3D: true,
         transformOrigin: "50% 24%",
+        scale: getMaskStartScale,
+        opacity: 1,
       })
 
       const heroEntrance = gsap.timeline()
@@ -125,7 +130,7 @@ export default function App() {
             start: "top top",
             end: () =>
               `+=${window.innerHeight * (window.innerWidth < 768 ? 2.2 : 2.8)}`,
-            scrub: 1,
+            scrub: true,
             pin: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
@@ -137,23 +142,23 @@ export default function App() {
           { yPercent: -100, duration: 1, ease: "none" },
           0,
         )
-        .to(".hero-coconut-mask", {
-          scale: () =>
-            window.innerWidth <= 600
-              ? 1.35
-              : window.innerWidth <= 900
-                ? 1.2
-                : 1,
-          duration: 0.45,
-        })
-        .to(".hero-coconut-mask", {
-          scale: 13.8,
-          duration: 2,
-          ease: "power2.inOut",
-        })
-        .to(".hero-coconut-mask", { opacity: 0, duration: 0.25 }, "-=0.25")
-        .to(".hero-final-copy", { opacity: 1, duration: 0.45 }, "-=0.5")
-        .to(".hero-plantation", { scale: 1.04, duration: 0.7, ease: "none" })
+        .to(
+          ".hero-coconut-mask",
+          {
+            scale: 13.8,
+            duration: 2,
+            ease: "none",
+            overwrite: "auto",
+          },
+          0.85,
+        )
+        .to(".hero-coconut-mask", { opacity: 0, duration: 0.2 }, 2.65)
+        .to(".hero-final-copy", { opacity: 1, duration: 0.45 }, 2.45)
+        .to(
+          ".hero-plantation",
+          { scale: 1.04, duration: 0.7, ease: "none" },
+          2.65,
+        )
 
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
         gsap.from(element, {
