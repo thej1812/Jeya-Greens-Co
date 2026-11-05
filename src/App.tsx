@@ -101,67 +101,46 @@ export default function App() {
   useLayoutEffect(() => {
     if (!root.current) return
     const context = gsap.context(() => {
-      gsap.set(".hero-coconut-stage", { xPercent: -50 })
-
       const heroEntrance = gsap.timeline()
-      heroEntrance
-        .fromTo(".hero-title .line", { yPercent: 115 }, {
-          yPercent: 0,
-          duration: 0.85,
-          stagger: 0.08,
-          ease: "power4.out",
-        })
-        .fromTo(
-          ".hero-coconut",
-          { scale: 0.8, y: 80, rotate: -12, opacity: 0 },
-          {
-            scale: 1,
-            y: 0,
-            rotate: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: "back.out(1.5)",
-          },
-          0.2,
-        )
-        .to(".hero-coconut", {
-          y: -10,
-          duration: 0.8,
-          yoyo: true,
-          repeat: 1,
-          ease: "sine.inOut",
-        })
+      heroEntrance.fromTo(".hero-title .line", { yPercent: 115 }, {
+        yPercent: 0,
+        duration: 0.85,
+        stagger: 0.08,
+        ease: "power4.out",
+      })
 
       gsap
         .timeline({
           scrollTrigger: {
             trigger: ".hero",
             start: "top top",
-            end: "+=220%",
-            scrub: true,
+            end: "+=340%",
+            scrub: 1,
             pin: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
         })
-        .to(".hero-coconut-stage", {
-          top: 0,
-          left: 0,
-          xPercent: 0,
-          width: "100vw",
-          height: "100svh",
-          scale: 1.01,
-          duration: 1,
-          ease: "none",
+        .to(".hero-landing", { yPercent: -100, duration: 1, ease: "none" })
+        .to(
+          ".hero-transition",
+          { yPercent: -100, duration: 1, ease: "none" },
+          0,
+        )
+        .to(
+          ".nav",
+          { yPercent: -130, opacity: 0, duration: 0.65, ease: "none" },
+          0.15,
+        )
+        .to(".hero-coconut-mask", { scale: 1, duration: 0.45 })
+        .to(".hero-coconut-mask", {
+          scale: 13.8,
+          duration: 2,
+          ease: "power2.inOut",
         })
-        .to(".hero-intro", { y: -260, opacity: 0, ease: "none" }, 0)
-        .to(".hero-coconut", { scale: 1.06, duration: 1, ease: "none" }, 0)
-        .to(".hero-palms", { scale: 1.08, duration: 1, ease: "none" }, 0)
-        .to(".hero-coconut", {
-          scale: 1.08,
-          duration: 1.25,
-          ease: "none",
-        })
+        .to(".hero-coconut-mask", { opacity: 0, duration: 0.25 }, "-=0.25")
+        .to(".hero-final-copy", { opacity: 1, duration: 0.45 }, "-=0.5")
+        .to(".hero-plantation", { scale: 1.04, duration: 0.7, ease: "none" })
 
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
         gsap.from(element, {
@@ -233,36 +212,56 @@ export default function App() {
 
       <main>
         <section className="hero">
-          <img
-            className="hero-palms"
-            src={`${A}/88383.png`}
-            alt="A vibrant coconut palm grove"
-          />
-          <div className="hero-shade" />
-          <div className="hero-intro">
-            <h1 className="hero-title">
-              <span>
-                <span className="line">Plants That</span>
-              </span>
-              <span>
-                <span className="line">Make You Smile</span>
-              </span>
-            </h1>
-            <p>
-              Green, modern,
-              <br />
-              life-enhancing plants
-            </p>
-            <a className="button button--green" href="#products">
-              Shop Now
-            </a>
-          </div>
-          <div className="hero-coconut-stage">
+          <div className="hero-landing">
             <img
-              className="hero-coconut"
-              src={`${A}/58600.png`}
-              alt="Coconut sweets"
+              className="hero-palms"
+              src={`${A}/88383.png`}
+              alt="A vibrant coconut palm grove"
             />
+            <div className="hero-shade" />
+            <img className="hero-wave" src={`${A}/2ba95.svg`} alt="" />
+            <div className="hero-intro">
+              <h1 className="hero-title">
+                <span>
+                  <span className="line">Plants That</span>
+                </span>
+                <span>
+                  <span className="line">Make You Smile</span>
+                </span>
+              </h1>
+              <p>
+                Green, modern,
+                <br />
+                life-enhancing plants
+              </p>
+              <a className="button button--green" href="#products">
+                Shop Now
+              </a>
+            </div>
+          </div>
+          <div className="hero-transition">
+            <img
+              className="hero-plantation"
+              src={`${A}/dc6e9.png`}
+              alt="A coconut grower resting in a plantation"
+            />
+            <div className="hero-plantation-shade" />
+            <img className="hero-coconut-mask" src={`${A}/5b5d5.svg`} alt="" />
+            <div className="hero-final-copy">
+              <p>
+                At <strong>Jeya Greens &amp; Co</strong>, every great product
+                begins with the goodness of nature and carefully sourced
+                coconuts.
+              </p>
+              <p>
+                From pure coconut oil to traditional sweets, we bring coconut
+                goodness to everyday life.
+              </p>
+              <p>
+                Celebrating familiar flavours and the timeless goodness of
+                coconuts.
+              </p>
+            </div>
           </div>
         </section>
 
