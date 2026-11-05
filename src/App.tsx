@@ -97,6 +97,10 @@ export default function App() {
   const [galleryStart, setGalleryStart] = useState(0)
   const [openFaq, setOpenFaq] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [navVisible, setNavVisible] = useState(true)
+  const [navFilled, setNavFilled] = useState(false)
+  const menuOpenRef = useRef(false)
 
   useLayoutEffect(() => {
     if (!root.current) return
@@ -128,12 +132,15 @@ export default function App() {
           { yPercent: -100, duration: 1, ease: "none" },
           0,
         )
-        .to(
-          ".nav",
-          { yPercent: -130, opacity: 0, duration: 0.65, ease: "none" },
-          0.15,
-        )
-        .to(".hero-coconut-mask", { scale: 1, duration: 0.45 })
+        .to(".hero-coconut-mask", {
+          scale: () =>
+            window.innerWidth <= 600
+              ? 1.35
+              : window.innerWidth <= 900
+                ? 1.2
+                : 1,
+          duration: 0.45,
+        })
         .to(".hero-coconut-mask", {
           scale: 13.8,
           duration: 2,
@@ -180,6 +187,54 @@ export default function App() {
     })
   }, [galleryStart])
 
+  useEffect(() => {
+    menuOpenRef.current = menuOpen
+    document.body.style.overflow = menuOpen ? "hidden" : ""
+    if (menuOpen) {
+      setNavVisible(true)
+      setNavFilled(true)
+    }
+
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY
+    let ticking = false
+
+    const updateNavigation = () => {
+      const currentScrollY = window.scrollY
+
+      if (currentScrollY <= 24) {
+        setNavVisible(true)
+        setNavFilled(false)
+      } else {
+        setNavFilled(true)
+        if (currentScrollY < lastScrollY - 4) setNavVisible(true)
+        if (currentScrollY > lastScrollY + 4 && !menuOpenRef.current) {
+          setNavVisible(false)
+        }
+      }
+
+      lastScrollY = currentScrollY
+      ticking = false
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateNavigation)
+        ticking = true
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  const closeMenu = () => setMenuOpen(false)
+
   const moveGallery = (direction: number) =>
     setGalleryStart(
       (current) => (current + direction + gallery.length) % gallery.length,
@@ -198,9 +253,13 @@ export default function App() {
 
   return (
     <div ref={root} id="top" className="site-shell">
-      <header className="nav">
+      <header
+        className={`nav ${navVisible ? "nav--visible" : "nav--hidden"} ${
+          navFilled ? "nav--filled" : ""
+        } ${menuOpen ? "nav--menu-open" : ""}`}
+      >
         <BrandLogo />
-        <nav aria-label="Primary navigation">
+        <nav className="desktop-nav" aria-label="Primary navigation">
           <a href="#products">Our Product</a>
           <a href="#story">Our Story</a>
           <a href="#process">Our Process</a>
@@ -209,6 +268,42 @@ export default function App() {
         <a className="button button--green nav-cta" href="#contact">
           Contact Now
         </a>
+        <button
+          className="menu-toggle"
+          type="button"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`}>
+          <nav aria-label="Mobile navigation">
+            <a href="#products" onClick={closeMenu}>
+              Our Product
+            </a>
+            <a href="#story" onClick={closeMenu}>
+              Our Story
+            </a>
+            <a href="#process" onClick={closeMenu}>
+              Our Process
+            </a>
+            <a href="#gallery" onClick={closeMenu}>
+              Gallery
+            </a>
+            <a href="#contact" onClick={closeMenu}>
+              Contact
+            </a>
+          </nav>
+          <div className="mobile-menu-meta">
+            <p>
+              <strong>Jeya Greens &amp; Co.</strong>
+            </p>
+            <p>Natural coconut goodness, thoughtfully made.</p>
+          </div>
+        </div>
       </header>
 
       <main>
@@ -344,7 +439,7 @@ export default function App() {
             <br />
             Jeya Greens.
           </h2>
-          
+
           <div className="story-copy" data-reveal>
             <p>
               At <strong>Jeya Greens & Co</strong>, our journey begins with a
