@@ -222,7 +222,7 @@ export default function App() {
             <div className="hero-shade" />
             <img className="hero-wave" src={`${A}/2ba95.svg`} alt="" />
             <div className="hero-intro">
-              <h1 className="hero-title">
+              <h1 className="hero-title ">
                 <span>
                   <span className="line">Plants That</span>
                 </span>
@@ -344,22 +344,7 @@ export default function App() {
             <br />
             Jeya Greens.
           </h2>
-          <div className="story-visual" data-reveal>
-            <img src={`${A}/dc6e9.png`} alt="A man enjoying a coconut grove" />
-            <div className="story-overlay" />
-            <p className="story-note story-note--one">
-              At <strong>Jeya Greens & Co</strong>, every great product begins
-              with the goodness of nature and carefully sourced coconuts.
-            </p>
-            <p className="story-note story-note--two">
-              From pure coconut oil to traditional sweets, we bring coconut
-              goodness to everyday life.
-            </p>
-            <p className="story-note story-note--three">
-              Celebrating familiar flavours and the timeless goodness of
-              coconuts.
-            </p>
-          </div>
+          
           <div className="story-copy" data-reveal>
             <p>
               At <strong>Jeya Greens & Co</strong>, our journey begins with a
