@@ -401,4 +401,51 @@ describe("Coconut API Integration Tests (Native HTTP via Named Pipe)", () => {
     assert.equal(body.success, true)
     assert.match(body.message, /in touch soon/i)
   })
+
+  // ==========================================
+  // Category API Tests
+  // ==========================================
+
+  it("GET /api/categories should return 200 and categories array", async () => {
+    const res = await apiRequest({ method: "GET", path: "/api/categories" })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.ok(Array.isArray(body.data))
+  })
+
+  it("POST /api/categories should reject unauthenticated requests with 401", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/categories",
+      body: { name: "Beverages" },
+    })
+    assert.equal(res.status, 401)
+  })
+
+  it("POST /api/categories should create new category when authenticated with 201", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/categories",
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { name: "Organic Snacks" },
+    })
+    assert.equal(res.status, 201)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.equal(body.data.name, "Organic Snacks")
+  })
+
+  it("POST /api/categories should reject duplicate category names (case-insensitive) with 409", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/categories",
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { name: "organic snacks" },
+    })
+    assert.equal(res.status, 409)
+    const body = await res.json()
+    assert.equal(body.success, false)
+    assert.match(body.message, /already exists/i)
+  })
 })

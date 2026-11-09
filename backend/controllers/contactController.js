@@ -4,14 +4,6 @@ import AppError from "../utils/AppError.js"
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function submitContact(req, res) {
-  // Silent bot trap: real users never see or fill the website field
-  if (req.body?.website) {
-    return res.status(200).json({
-      success: true,
-      message: "Thank you. We’ll be in touch soon.",
-    })
-  }
-
   const name = typeof req.body?.name === "string" ? req.body.name.trim() : ""
   const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : ""
   const enquiry = typeof req.body?.enquiry === "string" ? req.body.enquiry.trim() : ""
@@ -51,13 +43,23 @@ export async function submitContact(req, res) {
     throw new AppError("Please correct the highlighted fields.", 400, errors)
   }
 
+  // Dispatch email through SMTP provider
   const result = await sendContactEmail({ name, email, enquiry, message })
+
+  if (!result || !result.accepted || result.accepted.length === 0) {
+    console.error("[Contact Form] Email rejected by SMTP provider:", result?.rejected)
+    throw new AppError(
+      "The mail server was unable to deliver your enquiry. Please try again or reach us via WhatsApp.",
+      502,
+    )
+  }
 
   res.status(200).json({
     success: true,
     message: "Thank you. We’ll be in touch soon.",
     data: {
-      messageId: result?.messageId || "accepted",
+      messageId: result.messageId || "accepted",
+      accepted: result.accepted,
     },
   })
 }

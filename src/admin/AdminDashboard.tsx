@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo } from "react"
 import {
   fetchProducts,
   fetchGallery,
@@ -31,10 +31,28 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null)
   const [productName, setProductName] = useState("")
   const [productType, setProductType] = useState("Sweet")
+  const [isCustomCategory, setIsCustomCategory] = useState(false)
+  const [customCategoryInput, setCustomCategoryInput] = useState("")
   const [productFile, setProductFile] = useState<File | null>(null)
   const [productPreview, setProductPreview] = useState<string | null>(null)
   const [productSubmitting, setProductSubmitting] = useState(false)
   const productFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Derive unique categories automatically from current products
+  const existingCategories = useMemo(() => {
+    const set = new Set<string>()
+    products.forEach((p) => {
+      const cat = (p.category || p.type)?.trim()
+      if (cat) {
+        set.add(cat.replace(/\s+/g, " "))
+      }
+    })
+    if (set.size === 0) {
+      set.add("Sweet")
+      set.add("Plant Care")
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [products])
 
   // Gallery state
   const [gallery, setGallery] = useState<GalleryItem[]>([])
@@ -94,7 +112,9 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   const openNewProductForm = () => {
     setEditingProduct(null)
     setProductName("")
-    setProductType("Sweet")
+    setProductType(existingCategories[0] || "Sweet")
+    setIsCustomCategory(false)
+    setCustomCategoryInput("")
     setProductFile(null)
     setProductPreview(null)
     setProductFormOpen(true)
@@ -104,7 +124,10 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   const openEditProductForm = (product: ProductItem) => {
     setEditingProduct(product)
     setProductName(product.name)
-    setProductType(product.type)
+    const currentCat = (product.category || product.type || "Sweet").trim()
+    setProductType(currentCat)
+    setIsCustomCategory(false)
+    setCustomCategoryInput("")
     setProductFile(null)
     setProductPreview(product.image)
     setProductFormOpen(true)
@@ -125,8 +148,10 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!productName.trim() || !productType.trim()) {
-      showNotification("error", "Please provide product name and type.")
+    const finalCategory = (isCustomCategory ? customCategoryInput : productType).trim().replace(/\s+/g, " ")
+
+    if (!productName.trim() || !finalCategory) {
+      showNotification("error", "Category is mandatory. Please select or enter a category.")
       return
     }
 
@@ -139,7 +164,8 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     try {
       const formData = new FormData()
       formData.append("name", productName.trim())
-      formData.append("type", productType.trim())
+      formData.append("type", finalCategory)
+      formData.append("category", finalCategory)
       if (productFile) {
         formData.append("image", productFile)
       }
@@ -322,7 +348,7 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         {/* Tab Selection Navigation */}
-        <div className="flex border-b border-gray-200 mb-6 gap-1 sm:gap-2" role="tablist">
+        <div className="flex border-b border-gray-200 mb-6 gap-1 sm:gap-2 overflow-x-auto" role="tablist">
           <button
             onClick={() => setActiveTab("products")}
             type="button"
@@ -403,18 +429,70 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="prod-type">
-                        Product Type / Category *
-                      </label>
-                      <input
-                        id="prod-type"
-                        type="text"
-                        required
-                        value={productType}
-                        onChange={(e) => setProductType(e.target.value)}
-                        placeholder="e.g. Sweet, Plant Care, Drink"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700" htmlFor="prod-type">
+                          Product Category *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomCategory(!isCustomCategory)
+                            if (!isCustomCategory) {
+                              setCustomCategoryInput("")
+                            }
+                          }}
+                          className="text-xs font-semibold text-[#007b5f] hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          {isCustomCategory ? "← Choose Existing" : "+ Enter New Category"}
+                        </button>
+                      </div>
+
+                      {isCustomCategory ? (
+                        <div>
+                          <input
+                            id="prod-type-custom"
+                            type="text"
+                            required
+                            autoFocus
+                            placeholder="Enter category name (e.g. Snacks, Sweet)"
+                            value={customCategoryInput}
+                            onChange={(e) => setCustomCategoryInput(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
+                          />
+                          <p className="text-[11px] text-gray-400 mt-1">
+                            This category will be automatically assigned and updated across the website.
+                          </p>
+                        </div>
+                      ) : (
+                        <select
+                          id="prod-type"
+                          required
+                          value={productType}
+                          onChange={(e) => {
+                            if (e.target.value === "__NEW__") {
+                              setIsCustomCategory(true)
+                              setCustomCategoryInput("")
+                            } else {
+                              setProductType(e.target.value)
+                            }
+                          }}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm cursor-pointer"
+                        >
+                          {existingCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                          <option value="__NEW__">+ Enter New Category...</option>
+                        </select>
+                      )}
+
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                        <span>Selected Category:</span>
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#007b5f]/10 text-[#007b5f]">
+                          {(isCustomCategory ? customCategoryInput.trim() : productType) || "None"}
+                        </span>
+                      </div>
                     </div>
 
                     <div>
@@ -535,8 +613,10 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
           </div>
         )}
 
+
+
         {/* ========================================================= */}
-        {/* TAB 2: GALLERY MANAGEMENT */}
+        {/* TAB 3: GALLERY MANAGEMENT */}
         {/* ========================================================= */}
         {activeTab === "gallery" && (
           <div>

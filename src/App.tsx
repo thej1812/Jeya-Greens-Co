@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import AdminView from "./admin/AdminView"
@@ -172,6 +172,29 @@ function PublicWebsite() {
   // Dynamic API state with initial fallbacks
   const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
   const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // Derive unique categories automatically from loaded products
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>()
+    products.forEach((p) => {
+      const cat = (p.category || p.type)?.trim()
+      if (cat) {
+        set.add(cat.replace(/\s+/g, " "))
+      }
+    })
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [products])
+
+  // Automatically reset selected category if its last product is deleted or reassigned
+  useEffect(() => {
+    if (
+      selectedCategory &&
+      !availableCategories.some((c) => c.toLowerCase() === selectedCategory.toLowerCase())
+    ) {
+      setSelectedCategory(null)
+    }
+  }, [availableCategories, selectedCategory])
 
   // Fetch dynamic products and gallery from backend
   useEffect(() => {
@@ -424,8 +447,6 @@ function PublicWebsite() {
     setContactSuccess(null)
 
     const form = event.currentTarget
-    const formData = new FormData(form)
-    const website = String(formData.get("website") || "").trim()
 
     const errors = validateContactForm()
     if (Object.keys(errors).length > 0) {
@@ -443,7 +464,6 @@ function PublicWebsite() {
         email: contactValues.email.trim(),
         enquiry: contactValues.enquiry.trim(),
         message: contactValues.message.trim(),
-        website,
       })
       setContactSuccess(confirmation)
       setContactValues({ name: "", email: "", enquiry: "", message: "" })
@@ -473,6 +493,14 @@ function PublicWebsite() {
       setContactSubmitting(false)
     }
   }
+
+  const displayedProducts = selectedCategory
+    ? products.filter(
+        (p) =>
+          (p.type || p.category)?.trim().replace(/\s+/g, " ").toLowerCase() ===
+          selectedCategory.trim().toLowerCase(),
+      )
+    : products
 
   return (
     <div ref={root} id="top" className="site-shell">
@@ -601,13 +629,15 @@ function PublicWebsite() {
               <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
                 <button
                   className="split-main"
+                  type="button"
                   onClick={() => setCategoryOpen(!categoryOpen)}
                 >
-                  Categories
+                  {selectedCategory ? selectedCategory : "Categories"}
                 </button>
 
                 <button
                   className="split-toggle"
+                  type="button"
                   onClick={() => setCategoryOpen(!categoryOpen)}
                   aria-expanded={categoryOpen}
                   aria-label="Open categories"
@@ -616,10 +646,41 @@ function PublicWebsite() {
                 </button>
 
                 {categoryOpen && (
-                  <div className="category-menu">
-                    <a href="#product-grid">Traditional sweets</a>
-                    <a href="#product-grid">Coconut oils</a>
-                    <a href="#product-grid">Fresh drinks</a>
+                  <div className="category-menu" role="menu">
+                    <button
+                      type="button"
+                      className={`category-menu-btn ${selectedCategory === null ? "is-active" : ""}`}
+                      onClick={() => {
+                        setSelectedCategory(null)
+                        setCategoryOpen(false)
+                      }}
+                    >
+                      <span>All Products</span>
+                      <span className="cat-count">({products.length})</span>
+                    </button>
+                    {availableCategories.map((cat) => {
+                      const count = products.filter(
+                        (p) =>
+                          (p.type || p.category)?.trim().replace(/\s+/g, " ").toLowerCase() ===
+                          cat.toLowerCase(),
+                      ).length
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`category-menu-btn ${
+                            selectedCategory?.trim().toLowerCase() === cat.toLowerCase() ? "is-active" : ""
+                          }`}
+                          onClick={() => {
+                            setSelectedCategory(cat)
+                            setCategoryOpen(false)
+                          }}
+                        >
+                          <span>{cat}</span>
+                          <span className="cat-count">({count})</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -627,25 +688,49 @@ function PublicWebsite() {
           </div>
 
           <div id="product-grid" className="product-grid">
-            {products.map((product, index) => (
-              <article className="product-card" data-reveal key={product._id || product.name}>
-                <img
-                  src={product.image.startsWith("http") ? product.image : `${A}/${product.image}`}
-                  alt={product.name}
-                />
+            {displayedProducts.length === 0 ? (
+              <div
+                style={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  padding: "50px 20px",
+                  background: "rgba(0, 123, 95, 0.05)",
+                  borderRadius: "16px",
+                  margin: "20px 0",
+                }}
+              >
+                <p style={{ color: "var(--ink)", fontSize: "18px", fontWeight: 600, marginBottom: "14px" }}>
+                  No products found in category &ldquo;{selectedCategory}&rdquo;.
+                </p>
+                <button
+                  className="button button--green"
+                  type="button"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  View All Products
+                </button>
+              </div>
+            ) : (
+              displayedProducts.map((product, index) => (
+                <article className="product-card" data-reveal key={product._id || product.name}>
+                  <img
+                    src={product.image.startsWith("http") ? product.image : `${A}/${product.image}`}
+                    alt={product.name}
+                  />
 
-                <div className="product-gradient" />
+                  <div className="product-gradient" />
 
-                <span className="product-tag">{product.type}</span>
+                  <span className="product-tag">{product.type || product.category}</span>
 
-                <div className="product-copy">
-                  <span>Organic</span>
-                  <h3>{product.name}</h3>
-                </div>
+                  <div className="product-copy">
+                    <span>Organic</span>
+                    <h3>{product.name}</h3>
+                  </div>
 
-                <span className="product-index">0{index + 1}</span>
-              </article>
-            ))}
+                  <span className="product-index">0{index + 1}</span>
+                </article>
+              ))
+            )}
           </div>
         </section>
 
@@ -827,20 +912,6 @@ function PublicWebsite() {
             <BrandLogo light />
             <form onSubmit={submitForm} noValidate>
               <h2>Contact us</h2>
-              {/* Bot honeypot: visually hidden, ignored by screen readers */}
-              <input
-                type="text"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                style={{
-                  position: "absolute",
-                  left: "-9999px",
-                  opacity: 0,
-                  pointerEvents: "none",
-                }}
-                aria-hidden="true"
-              />
 
               <div>
                 <input

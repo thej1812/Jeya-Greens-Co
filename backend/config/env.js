@@ -98,6 +98,9 @@ export const config = {
   get contactReceiverEmail() {
     return process.env.CONTACT_RECEIVER_EMAIL?.trim() || process.env.SMTP_USER?.trim() || ""
   },
+  get contactTimezone() {
+    return process.env.CONTACT_TIMEZONE?.trim() || "Asia/Kolkata"
+  },
   get contactRateLimitMax() {
     return Number(process.env.CONTACT_RATE_LIMIT_MAX) || 5
   },

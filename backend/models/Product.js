@@ -16,6 +16,11 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: PRODUCT_LIMITS.type,
     },
+    category: {
+      type: String,
+      trim: true,
+      maxlength: PRODUCT_LIMITS.type,
+    },
     image: {
       type: String,
       required: [true, "Product image URL is required."],
@@ -33,7 +38,17 @@ const productSchema = new mongoose.Schema(
   },
 )
 
-// Backwards compatibility alias for imageUrl
+// Ensure type and category stay in sync
+productSchema.pre("save", function (next) {
+  if (this.category && !this.type) {
+    this.type = this.category
+  } else if (this.type) {
+    this.category = this.type
+  }
+  next()
+})
+
+// Backwards compatibility alias for imageUrl and category
 productSchema.virtual("imageUrl").get(function () {
   return this.image
 }).set(function (val) {

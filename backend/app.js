@@ -10,6 +10,7 @@ import productRoutes from "./routes/productRoutes.js"
 import galleryRoutes from "./routes/galleryRoutes.js"
 import dashboardRoutes from "./routes/dashboardRoutes.js"
 import contactRoutes from "./routes/contactRoutes.js"
+import categoryRoutes from "./routes/categoryRoutes.js"
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js"
 
 export function createApp() {
@@ -66,6 +67,7 @@ export function createApp() {
   app.use("/api/gallery", galleryRoutes)
   app.use("/api/admin", dashboardRoutes)
   app.use("/api/contact", contactRoutes)
+  app.use("/api/categories", categoryRoutes)
 
   // 404 & Global error handlers
   app.use(notFound)

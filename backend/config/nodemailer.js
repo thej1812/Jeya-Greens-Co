@@ -78,13 +78,30 @@ export async function sendContactEmail({ name, email, enquiry, message }) {
   }
 
   const transporter = getTransporter()
-  const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+  const timestamp = new Date().toLocaleString("en-IN", { timeZone: config.contactTimezone || "Asia/Kolkata" })
+
+  let destination = config.contactReceiverEmail || config.smtpUser
+  // If the receiver is identical to the sender Gmail account, Gmail routes self-sent emails
+  // only to "\Sent" (archived) and omits the "\Inbox" label. Using Gmail plus-addressing (user+enquiry@gmail.com)
+  // delivers directly to the Primary Inbox as an unread message while maintaining the user's account.
+  if (
+    destination.toLowerCase() === (config.smtpUser || "").toLowerCase() &&
+    destination.toLowerCase().endsWith("@gmail.com") &&
+    !destination.includes("+")
+  ) {
+    destination = destination.replace(/@gmail\.com$/i, "+enquiry@gmail.com")
+  }
 
   const mailOptions = {
-    from: `"Jeya Greens & Co. Contact" <${config.contactSenderEmail}>`,
-    to: config.contactReceiverEmail,
+    from: `"Jeya Greens & Co. Contact" <${config.contactSenderEmail || config.smtpUser}>`,
+    to: destination,
     replyTo: `"${name}" <${email}>`,
     subject: `New Customer Enquiry: ${enquiry} - ${name}`,
+    headers: {
+      "X-Priority": "1",
+      Priority: "urgent",
+      Importance: "high",
+    },
     text: `New Customer Enquiry via Jeya Greens Website\n\nName: ${name}\nEmail: ${email}\nEnquiry Type: ${enquiry}\n\nMessage:\n${message}\n\nReceived: ${timestamp} IST\nReply directly to this email to respond to the customer.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #fdffe2;">

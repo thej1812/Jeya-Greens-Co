@@ -42,8 +42,18 @@ export interface ProductItem {
   _id: string
   name: string
   type: string
+  category?: string
   image: string
   imagePublicId?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CategoryItem {
+  _id: string
+  name: string
+  slug?: string
+  productCount?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -206,6 +216,69 @@ export async function deleteProduct(id: string): Promise<void> {
 }
 
 // ==========================================
+// Category CRUD (Admin & Public)
+// ==========================================
+
+export async function fetchCategories(): Promise<CategoryItem[]> {
+  const res = await fetch(`${API_BASE}/categories`, {
+    headers: { Accept: "application/json" },
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to load categories (HTTP ${res.status})`)
+  }
+  const json: ApiResponse<CategoryItem[]> = await res.json()
+  return json.data || []
+}
+
+export async function createCategory(name: string): Promise<CategoryItem> {
+  const res = await fetch(`${API_BASE}/categories`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ name }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to create category.")
+  }
+  return json.data
+}
+
+export async function updateCategory(id: string, name: string): Promise<CategoryItem> {
+  const res = await fetch(`${API_BASE}/categories/${id}`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ name }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to update category.")
+  }
+  return json.data
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/categories/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+    credentials: "include",
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to delete category.")
+  }
+}
+
+// ==========================================
 // Gallery CRUD (Admin Only)
 // ==========================================
 
@@ -262,8 +335,6 @@ export interface ContactEnquiry {
   email: string
   enquiry: string
   message: string
-  /** Honeypot: must stay empty. Real visitors never see this field. */
-  website?: string
 }
 
 export class ContactError extends Error {
