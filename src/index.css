@@ -125,7 +125,8 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
 .hero-title > span { display: block; overflow: hidden; margin-block: -0.08em; padding-block: .08em; }
 .hero-title .line { display: block; }
 .hero-intro > p { position: absolute; margin-top: 64px; top: 52%; right: 5vw; color: var(--green); font-size: clamp(16px, 1.3vw, 32px); text-align: right; }
-.hero-intro > .button { position: absolute; margin-top: 68px; top: 57%; right: 5vw; }
+/* Button sits below the two-line description: same anchor as the <p>, offset by its height + a gap so they never overlap */
+.hero-intro > .button { position: absolute; margin-top: 64px; top: calc(52% + 2.6 * clamp(16px, 1.3vw, 32px) + clamp(16px, 1.6vw, 28px)); right: 5vw; }
 .hero-transition { z-index: 3; top: 100%; background: var(--cream); }
 .hero-plantation { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center center; transform-origin: center; will-change: transform; }
 .hero-plantation-shade { position: absolute; inset: 0; background: rgba(0,0,0,.28); }
@@ -317,7 +318,28 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
 .footer-links > div { display: flex; flex-direction: column; gap: 34px; }
 .footer-links a, .footer-bottom a { color: inherit; text-decoration: none; }
 .footer-links a:hover, .footer-bottom a:hover { text-decoration: underline; }
-.footer-bottles { position: absolute; z-index: -1; top: 280px; right: -115px; bottom: -103px; left: 969px; width: 440px; transform: rotate(-90deg); transform-origin: center; }
+.footer-bottles {
+  /* Asset is upright and rotated -90deg (caps left). Visible bottles in the rotated image:
+     caps ≈ left + .06·W, bottle bases ≈ left + .925·W, top ≈ top + .19·W, band height ≈ .515·W. */
+  --pad: clamp(20px, 4.7vw, 96px);
+  /* just past the right edge of .footer-links (form column + grid gap + both link columns) */
+  --caps: calc(620px + clamp(60px, 8vw, 140px) + clamp(52px, 7vw, 120px) + 200px);
+  --bw: min(900px, calc((100vw - var(--pad) - var(--caps)) / .6));
+  --cx: max(var(--caps), calc(100vw - var(--pad) - .62 * var(--bw)));
+  position: absolute; z-index: -1;
+  top: calc(clamp(80px, 10vw, 140px) - .19 * var(--bw));
+  left: calc(var(--cx) - .06 * var(--bw));
+  width: var(--bw); max-width: none; height: auto;
+  transform: rotate(-90deg); transform-origin: center; pointer-events: none;
+}
+/* Narrower desktops: not enough room beside the links, so sit the bottles below them in the right column */
+@media (min-width: 901px) and (max-width: 1399px) {
+  .footer-bottles {
+    --bw: clamp(360px, 36vw, 480px);
+    --cx: max(calc(620px + clamp(60px, 8vw, 140px)), calc(100vw - var(--pad) - .65 * var(--bw)));
+    top: calc(clamp(80px, 10vw, 140px) + 260px - .19 * var(--bw));
+  }
+}
 .footer-bottom { position: relative; z-index: 3; display: flex; justify-content: space-between; gap: 30px; border: 0 solid transparent; padding-top: 30px; font-size: 13px; font-weight: 700; }
 .footer-bottom p:last-child { display: flex; gap: 35px; }
 
@@ -343,7 +365,7 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   .hero-intro { min-height: 120svh; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: clamp(150px, 22svh, 220px) clamp(24px, 6vw, 56px) 40px; }
   .hero-title { width: 100%; margin-top: 0; font-size: clamp(66px, 17vw, 118px); }
   .hero-intro > p { position: static; margin-top: 26px; color: var(--green); font-size: clamp(15px, 2.5vw, 20px); text-align: left; }
-  .hero-intro > .button { position: static; margin-top: 20px; }
+  .hero-intro > .button { position: static; margin-top: 28px; }
   .hero-plantation { object-position: center; }
   .hero-final-copy p { max-width: 43vw; font-size: 13px; }
   .section-head { align-items: start; flex-direction: column; }
@@ -359,9 +381,9 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   .gallery-grid, .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gallery-card { max-width: 580px; margin: auto; }
   .review-grid { margin-top: 52px; }
-  .footer-top { grid-template-columns: 1fr; gap: 36px; padding-bottom: clamp(220px, 38vw, 290px); }
+  .footer-top { --bw: clamp(300px, 78vw, 620px); grid-template-columns: 1fr; gap: 36px; padding-bottom: calc(.515 * var(--bw) + 40px); }
   .footer-links { padding-top: 30px; }
-  .footer-bottles { top: auto; right: -30%; bottom: -6%; left: auto; width: 100vw; }
+  .footer-bottles { --pad: clamp(20px, 5vw, 40px); --bw: clamp(300px, 78vw, 620px); top: auto; bottom: calc(16px - .206 * var(--bw)); left: calc(100vw - var(--pad) - .71 * var(--bw)); }
   .footer-bottom { align-items: flex-start; flex-direction: column; }
 }
 
@@ -379,7 +401,7 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   .hero-intro { padding-top: clamp(135px, 20svh, 180px); }
   .hero-title { margin-top: 0; font-size: 18vw; }
   .hero-intro > p { margin-top: 22px; font-size: 14px; }
-  .hero-intro > .button { margin-top: 18px; }
+  .hero-intro > .button { margin-top: 24px; }
   .product-card { flex-basis: 83vw; }
   .story-note--one { top: 12%; }
   .story-note--two { top: 49%; left: 5%; }
@@ -391,7 +413,7 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
 @media (max-height: 700px) and (min-width: 901px) {
   .hero-title { margin-top: 15vh; font-size: min(9vw, 130px); }
   .hero-intro > p { top: 50%; }
-  .hero-intro > .button { top: 58%; }
+  .hero-intro > .button { top: calc(50% + 2.6 * clamp(16px, 1.3vw, 32px) + clamp(16px, 1.6vw, 28px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

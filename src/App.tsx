@@ -1,25 +1,42 @@
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import AdminView from "./admin/AdminView"
+import {
+  fetchProducts,
+  fetchGallery,
+  sendContactEnquiry,
+  ContactError,
+  ProductItem,
+  GalleryItem,
+} from "./services/api"
 
 gsap.registerPlugin(ScrollTrigger)
 
 const A = "/assets"
 
-const products = [
-  { name: "Coconut Burfi", type: "Sweet", image: "fe393.png" },
-  { name: "Coconut Laddu", type: "Sweet", image: "736d2.png" },
-  { name: "Coconut Oil", type: "Plant Care", image: "e7e2a.png" },
-  { name: "Coconut Water", type: "Plant Care", image: "d452e.png" },
+// Initial product data preserved as fallback and default state
+const defaultProducts: ProductItem[] = [
+  { _id: "init-1", name: "Coconut Burfi", type: "Sweet", image: "fe393.png" },
+  { _id: "init-2", name: "Coconut Laddu", type: "Sweet", image: "736d2.png" },
+  { _id: "init-3", name: "Coconut Oil", type: "Plant Care", image: "e7e2a.png" },
+  { _id: "init-4", name: "Coconut Water", type: "Plant Care", image: "d452e.png" },
 ]
 
-const gallery = [
-  { image: "f4680.png", caption: "Shop only the orders you want." },
+// Initial gallery data preserved as fallback and default state
+const defaultGallery: GalleryItem[] = [
   {
+    _id: "init-g1",
+    image: "f4680.png",
+    caption: "Shop only the orders you want.",
+  },
+  {
+    _id: "init-g2",
     image: "40a51.png",
     caption: "Go to the store to pick items for the order.",
   },
   {
+    _id: "init-g3",
     image: "df085.png",
     caption: "Chat with customers for questions or changes.",
   },
@@ -91,16 +108,105 @@ function ArrowIcon({
   )
 }
 
+function checkIsAdminRoute(): boolean {
+  if (typeof window === "undefined") return false
+  const path = window.location.pathname || ""
+  const hash = window.location.hash || ""
+  return path.startsWith("/admin") || hash.startsWith("#/admin")
+}
+
 export default function App() {
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(checkIsAdminRoute)
+
+  // Listen for browser navigation (popstate & hashchange)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setIsAdminRoute(checkIsAdminRoute())
+    }
+    window.addEventListener("popstate", handleLocationChange)
+    window.addEventListener("hashchange", handleLocationChange)
+    return () => {
+      window.removeEventListener("popstate", handleLocationChange)
+      window.removeEventListener("hashchange", handleLocationChange)
+    }
+  }, [])
+
+  const handleBackToPublicSite = () => {
+    if (window.location.hash.startsWith("#/admin")) {
+      window.location.hash = "#top"
+    } else {
+      window.history.pushState({}, "", "/")
+      setIsAdminRoute(false)
+    }
+  }
+
+  // Render Admin Portal if visiting /admin or /#/admin
+  if (isAdminRoute) {
+    return <AdminView onBackToSite={handleBackToPublicSite} />
+  }
+
+  return <PublicWebsite />
+}
+
+function PublicWebsite() {
   const root = useRef<HTMLDivElement>(null)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [galleryStart, setGalleryStart] = useState(0)
   const [openFaq, setOpenFaq] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  const [contactValues, setContactValues] = useState({
+    name: "",
+    email: "",
+    enquiry: "",
+    message: "",
+  })
+  const [contactFieldErrors, setContactFieldErrors] = useState<Record<string, string>>({})
+  const [contactSubmitting, setContactSubmitting] = useState(false)
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null)
+  const [contactError, setContactError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [navVisible, setNavVisible] = useState(true)
   const [navFilled, setNavFilled] = useState(false)
   const menuOpenRef = useRef(false)
+
+  // Dynamic API state with initial fallbacks
+  const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
+  const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
+
+  // Fetch dynamic products and gallery from backend
+  useEffect(() => {
+    let active = true
+
+    async function loadData() {
+      try {
+        const [apiProducts, apiGallery] = await Promise.all([
+          fetchProducts().catch(() => null),
+          fetchGallery().catch(() => null),
+        ])
+
+        if (!active) return
+
+        if (apiProducts && apiProducts.length > 0) {
+          setProducts(apiProducts)
+        }
+        if (apiGallery && apiGallery.length > 0) {
+          setGallery(apiGallery)
+        }
+
+        // Refresh GSAP ScrollTrigger after content renders
+        setTimeout(() => {
+          ScrollTrigger.refresh()
+        }, 100)
+      } catch {
+        // Fallback already populated
+      }
+    }
+
+    loadData()
+    return () => {
+      active = false
+    }
+  }, [])
 
   useLayoutEffect(() => {
     if (!root.current) return
@@ -195,7 +301,7 @@ export default function App() {
       stagger: 0.08,
       ease: "power2.out",
     })
-  }, [galleryStart])
+  }, [galleryStart, gallery])
 
   useEffect(() => {
     menuOpenRef.current = menuOpen
@@ -245,20 +351,127 @@ export default function App() {
 
   const closeMenu = () => setMenuOpen(false)
 
-  const moveGallery = (direction: number) =>
+  const moveGallery = (direction: number) => {
+    if (gallery.length === 0) return
     setGalleryStart(
       (current) => (current + direction + gallery.length) % gallery.length,
     )
+  }
 
-  const submitForm = (event: FormEvent<HTMLFormElement>) => {
+  const handleContactChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target
+    setContactValues((prev) => ({ ...prev, [name]: value }))
+    if (contactFieldErrors[name]) {
+      setContactFieldErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
+    if (contactError) {
+      setContactError(null)
+    }
+  }
+
+  const validateContactForm = () => {
+    const errors: Record<string, string> = {}
+    const name = contactValues.name.trim()
+    const email = contactValues.email.trim()
+    const enquiry = contactValues.enquiry.trim()
+    const message = contactValues.message.trim()
+
+    if (!name) {
+      errors.name = "Please enter your name."
+    } else if (name.length < 2) {
+      errors.name = "Name must be at least 2 characters."
+    } else if (name.length > 100) {
+      errors.name = "Name must be 100 characters or fewer."
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email) {
+      errors.email = "Please enter your email address."
+    } else if (!emailRegex.test(email) || email.length > 150) {
+      errors.email = "Please enter a valid email address."
+    }
+
+    if (!enquiry) {
+      errors.enquiry = "Please enter an enquiry topic."
+    } else if (enquiry.length < 2) {
+      errors.enquiry = "Enquiry must be at least 2 characters."
+    } else if (enquiry.length > 150) {
+      errors.enquiry = "Enquiry must be 150 characters or fewer."
+    }
+
+    if (!message) {
+      errors.message = "Please provide your message."
+    } else if (message.length < 2) {
+      errors.message = "Message must be at least 2 characters."
+    } else if (message.length > 3000) {
+      errors.message = "Message must be 3000 characters or fewer."
+    }
+
+    return errors
+  }
+
+  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setSubmitted(true)
-    gsap.fromTo(".form-success", { y: 8, opacity: 0 }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.35,
-    })
-    event.currentTarget.reset()
+    if (contactSubmitting) return
+
+    setContactError(null)
+    setContactSuccess(null)
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const website = String(formData.get("website") || "").trim()
+
+    const errors = validateContactForm()
+    if (Object.keys(errors).length > 0) {
+      setContactFieldErrors(errors)
+      setContactError("Please correct the highlighted fields.")
+      return
+    }
+
+    setContactFieldErrors({})
+    setContactSubmitting(true)
+
+    try {
+      const confirmation = await sendContactEnquiry({
+        name: contactValues.name.trim(),
+        email: contactValues.email.trim(),
+        enquiry: contactValues.enquiry.trim(),
+        message: contactValues.message.trim(),
+        website,
+      })
+      setContactSuccess(confirmation)
+      setContactValues({ name: "", email: "", enquiry: "", message: "" })
+      setSubmitted(true)
+      form.reset()
+      gsap.fromTo(
+        ".form-success",
+        { y: 8, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.35,
+        },
+      )
+    } catch (err) {
+      if (err instanceof ContactError) {
+        setContactError(err.message)
+        if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+          setContactFieldErrors(err.fieldErrors)
+        }
+      } else if (err instanceof Error) {
+        setContactError(err.message)
+      } else {
+        setContactError("Failed to send your message. Please try again later.")
+      }
+    } finally {
+      setContactSubmitting(false)
+    }
   }
 
   return (
@@ -375,62 +588,66 @@ export default function App() {
             </div>
           </div>
         </section>
-<section id="products" className="products section-pad">
-  <div className="section-head" data-reveal>
-    <h2>
-      Plants That
-      <br />
-      Make You Smile
-    </h2>
 
-    <div className="split-wrap">
-      <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
-        <button
-          className="split-main"
-          onClick={() => setCategoryOpen(!categoryOpen)}
-        >
-          Categories
-        </button>
+        <section id="products" className="products section-pad">
+          <div className="section-head" data-reveal>
+            <h2>
+              Plants That
+              <br />
+              Make You Smile
+            </h2>
 
-        <button
-          className="split-toggle"
-          onClick={() => setCategoryOpen(!categoryOpen)}
-          aria-expanded={categoryOpen}
-          aria-label="Open categories"
-        >
-          <ArrowIcon />
-        </button>
+            <div className="split-wrap">
+              <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
+                <button
+                  className="split-main"
+                  onClick={() => setCategoryOpen(!categoryOpen)}
+                >
+                  Categories
+                </button>
 
-        {categoryOpen && (
-          <div className="category-menu">
-            <a href="#product-grid">Traditional sweets</a>
-            <a href="#product-grid">Coconut oils</a>
-            <a href="#product-grid">Fresh drinks</a>
+                <button
+                  className="split-toggle"
+                  onClick={() => setCategoryOpen(!categoryOpen)}
+                  aria-expanded={categoryOpen}
+                  aria-label="Open categories"
+                >
+                  <ArrowIcon />
+                </button>
+
+                {categoryOpen && (
+                  <div className="category-menu">
+                    <a href="#product-grid">Traditional sweets</a>
+                    <a href="#product-grid">Coconut oils</a>
+                    <a href="#product-grid">Fresh drinks</a>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
 
-  <div id="product-grid" className="product-grid">
-    {products.map((product, index) => (
-      <article className="product-card" data-reveal key={product.name}>
-        <img src={`${A}/${product.image}`} alt={product.name} />
+          <div id="product-grid" className="product-grid">
+            {products.map((product, index) => (
+              <article className="product-card" data-reveal key={product._id || product.name}>
+                <img
+                  src={product.image.startsWith("http") ? product.image : `${A}/${product.image}`}
+                  alt={product.name}
+                />
 
-        <div className="product-gradient" />
+                <div className="product-gradient" />
 
-        <span className="product-tag">{product.type}</span>
+                <span className="product-tag">{product.type}</span>
 
-        <div className="product-copy">
-          <span>Organic</span>
-          <h3>{product.name}</h3>
-        </div>
+                <div className="product-copy">
+                  <span>Organic</span>
+                  <h3>{product.name}</h3>
+                </div>
 
-        <span className="product-index">0{index + 1}</span>
-      </article>
-    ))}
-  </div>
-</section>
+                <span className="product-index">0{index + 1}</span>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <div className="ticker" aria-hidden="true">
           <div className="ticker-track">
@@ -461,7 +678,7 @@ export default function App() {
 
           <div className="story-copy" data-reveal>
             <p>
-              At <strong>Jeya Greens & Co</strong>, our journey begins with a
+              At <strong>Jeya Greens &amp; Co</strong>, our journey begins with a
               deep-rooted love for coconuts and the goodness they bring to
               everyday life.
             </p>
@@ -527,13 +744,17 @@ export default function App() {
           </p>
           <div className="gallery-grid">
             {[0, 1, 2].map((offset) => {
+              if (gallery.length === 0) return null
               const item = gallery[(galleryStart + offset) % gallery.length]
               return (
                 <article
                   className="gallery-card"
-                  key={`${galleryStart}-${offset}`}
+                  key={`${galleryStart}-${offset}-${item._id || item.image}`}
                 >
-                  <img src={`${A}/${item.image}`} alt={item.caption} />
+                  <img
+                    src={item.image.startsWith("http") ? item.image : `${A}/${item.image}`}
+                    alt={item.caption}
+                  />
                   <p>{item.caption}</p>
                 </article>
               )
@@ -604,32 +825,160 @@ export default function App() {
         <div className="footer-top">
           <div>
             <BrandLogo light />
-            <form onSubmit={submitForm}>
+            <form onSubmit={submitForm} noValidate>
               <h2>Contact us</h2>
+              {/* Bot honeypot: visually hidden, ignored by screen readers */}
               <input
-                required
-                name="name"
-                placeholder="Name"
-                aria-label="Name"
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                style={{
+                  position: "absolute",
+                  left: "-9999px",
+                  opacity: 0,
+                  pointerEvents: "none",
+                }}
+                aria-hidden="true"
               />
-              <input
-                required
-                name="enquiry"
-                placeholder="Enquire"
-                aria-label="Enquiry"
-              />
-              <textarea
-                required
-                name="description"
-                placeholder="Description"
-                aria-label="Description"
-              />
-              <button className="button button--cream" type="submit">
-                Send Message
+
+              <div>
+                <input
+                  name="name"
+                  placeholder="Name"
+                  aria-label="Name"
+                  value={contactValues.name}
+                  onChange={handleContactChange}
+                  disabled={contactSubmitting}
+                  style={
+                    contactFieldErrors.name
+                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
+                      : undefined
+                  }
+                />
+                {contactFieldErrors.name && (
+                  <span
+                    style={{
+                      color: "#ffd2cc",
+                      fontSize: "13px",
+                      marginTop: "6px",
+                      display: "block",
+                    }}
+                  >
+                    {contactFieldErrors.name}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  aria-label="Email"
+                  value={contactValues.email}
+                  onChange={handleContactChange}
+                  disabled={contactSubmitting}
+                  style={
+                    contactFieldErrors.email
+                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
+                      : undefined
+                  }
+                />
+                {contactFieldErrors.email && (
+                  <span
+                    style={{
+                      color: "#ffd2cc",
+                      fontSize: "13px",
+                      marginTop: "6px",
+                      display: "block",
+                    }}
+                  >
+                    {contactFieldErrors.email}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  name="enquiry"
+                  placeholder="Enquire"
+                  aria-label="Enquiry"
+                  value={contactValues.enquiry}
+                  onChange={handleContactChange}
+                  disabled={contactSubmitting}
+                  style={
+                    contactFieldErrors.enquiry
+                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
+                      : undefined
+                  }
+                />
+                {contactFieldErrors.enquiry && (
+                  <span
+                    style={{
+                      color: "#ffd2cc",
+                      fontSize: "13px",
+                      marginTop: "6px",
+                      display: "block",
+                    }}
+                  >
+                    {contactFieldErrors.enquiry}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <textarea
+                  name="message"
+                  placeholder="Message"
+                  aria-label="Message"
+                  value={contactValues.message}
+                  onChange={handleContactChange}
+                  disabled={contactSubmitting}
+                  style={
+                    contactFieldErrors.message
+                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
+                      : undefined
+                  }
+                />
+                {contactFieldErrors.message && (
+                  <span
+                    style={{
+                      color: "#ffd2cc",
+                      fontSize: "13px",
+                      marginTop: "6px",
+                      display: "block",
+                    }}
+                  >
+                    {contactFieldErrors.message}
+                  </span>
+                )}
+              </div>
+
+              <button
+                className="button button--cream"
+                type="submit"
+                disabled={contactSubmitting}
+              >
+                {contactSubmitting ? "Sending..." : "Send Message"}
               </button>
-              {submitted && (
+              {contactSuccess && (
                 <p className="form-success" role="status">
-                  Thank you. We’ll be in touch soon.
+                  {contactSuccess}
+                </p>
+              )}
+              {contactError && (
+                <p
+                  className="form-error"
+                  role="alert"
+                  style={{
+                    color: "#ffd2cc",
+                    fontSize: "14px",
+                    marginTop: "6px",
+                    lineHeight: "1.4",
+                  }}
+                >
+                  {contactError}
                 </p>
               )}
             </form>
@@ -655,7 +1004,7 @@ export default function App() {
           />
         </div>
         <div className="footer-bottom">
-          <p>Copyright 2026 — JEYA GREENS & CO.</p>
+          <p>Copyright 2026 — JEYA GREENS &amp; CO.</p>
           <p>
             <a href="#top">Terms of services</a>
             <a href="#top">Privacy Policy</a>
