@@ -150,6 +150,7 @@ export default function App() {
 
 function PublicWebsite() {
   const root = useRef<HTMLDivElement>(null)
+  const categoryWrapRef = useRef<HTMLDivElement>(null)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [galleryStart, setGalleryStart] = useState(0)
   const [openFaq, setOpenFaq] = useState(0)
@@ -195,6 +196,33 @@ function PublicWebsite() {
       setSelectedCategory(null)
     }
   }, [availableCategories, selectedCategory])
+
+  // Close category dropdown on click outside or Escape key
+  useEffect(() => {
+    if (!categoryOpen) return
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (categoryWrapRef.current && !categoryWrapRef.current.contains(e.target as Node)) {
+        setCategoryOpen(false)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCategoryOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("touchstart", handleClickOutside)
+    document.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [categoryOpen])
 
   // Fetch dynamic products and gallery from backend
   useEffect(() => {
@@ -625,7 +653,7 @@ function PublicWebsite() {
               Make You Smile
             </h2>
 
-            <div className="split-wrap">
+            <div className="split-wrap" ref={categoryWrapRef}>
               <div className={`split-button ${categoryOpen ? "is-open" : ""}`}>
                 <button
                   className="split-main"
