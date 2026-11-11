@@ -448,4 +448,68 @@ describe("Coconut API Integration Tests (Native HTTP via Named Pipe)", () => {
     assert.equal(body.success, false)
     assert.match(body.message, /already exists/i)
   })
+
+  // ==========================================
+  // CORS & Preflight Tests
+  // ==========================================
+
+  it("OPTIONS /api/products preflight should succeed with 204 and correct CORS headers for Vercel origin", async () => {
+    const res = await apiRequest({
+      method: "OPTIONS",
+      path: "/api/products",
+      headers: {
+        Origin: "https://jeya-greens-co.vercel.app",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "Content-Type,Authorization",
+      },
+    })
+    assert.equal(res.status, 204)
+    assert.equal(res.headers["access-control-allow-origin"], "https://jeya-greens-co.vercel.app")
+    assert.equal(res.headers["access-control-allow-credentials"], "true")
+    assert.ok(res.headers["access-control-allow-methods"]?.includes("GET"))
+    assert.ok(res.headers["access-control-allow-methods"]?.includes("OPTIONS"))
+    assert.ok(res.headers["access-control-allow-headers"]?.includes("Content-Type"))
+  })
+
+  it("GET /api/products should include Access-Control-Allow-Origin for Vercel origin", async () => {
+    const res = await apiRequest({
+      method: "GET",
+      path: "/api/products",
+      headers: { Origin: "https://jeya-greens-co.vercel.app" },
+    })
+    assert.equal(res.status, 200)
+    assert.equal(res.headers["access-control-allow-origin"], "https://jeya-greens-co.vercel.app")
+    assert.equal(res.headers["access-control-allow-credentials"], "true")
+  })
+
+  it("GET /api/gallery should include Access-Control-Allow-Origin for Vercel origin", async () => {
+    const res = await apiRequest({
+      method: "GET",
+      path: "/api/gallery",
+      headers: { Origin: "https://jeya-greens-co.vercel.app" },
+    })
+    assert.equal(res.status, 200)
+    assert.equal(res.headers["access-control-allow-origin"], "https://jeya-greens-co.vercel.app")
+    assert.equal(res.headers["access-control-allow-credentials"], "true")
+  })
+
+  it("GET /api/health should allow Vercel origin and return 200", async () => {
+    const res = await apiRequest({
+      method: "GET",
+      path: "/api/health",
+      headers: { Origin: "https://jeya-greens-co.vercel.app" },
+    })
+    assert.equal(res.status, 200)
+    assert.equal(res.headers["access-control-allow-origin"], "https://jeya-greens-co.vercel.app")
+  })
+
+  it("CORS should reject unauthorized origin with 403 and no allow header", async () => {
+    const res = await apiRequest({
+      method: "GET",
+      path: "/api/products",
+      headers: { Origin: "https://unauthorized-malicious-site.com" },
+    })
+    assert.equal(res.status, 403)
+    assert.equal(res.headers["access-control-allow-origin"], undefined)
+  })
 })

@@ -35,14 +35,17 @@ export function assertEnv() {
   }
 }
 
+const PRODUCTION_ORIGINS = ["https://jeya-greens-co.vercel.app"]
+const LOCAL_ORIGINS = ["http://localhost:8443", "http://localhost:5173", "http://localhost:3000"]
+
 const parseOrigins = (value) => {
-  const defaults = ["http://localhost:8443", "http://localhost:5173", "http://localhost:3000"]
+  const defaults = [...PRODUCTION_ORIGINS, ...LOCAL_ORIGINS]
   if (!value) return defaults
   const parsed = value
-    .split(",")
-    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .split(/[,\s;]+/)
+    .map((origin) => origin.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, ""))
     .filter(Boolean)
-  return Array.from(new Set([...parsed, ...defaults]))
+  return Array.from(new Set([...PRODUCTION_ORIGINS, ...parsed, ...LOCAL_ORIGINS]))
 }
 
 export const config = {

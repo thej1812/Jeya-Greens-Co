@@ -30,9 +30,13 @@ export function createApp() {
         // Allow requests without Origin (curl, server-to-server, health checks)
         if (!origin) return callback(null, true)
 
+        const normalizedOrigin = origin.trim().replace(/\/+$/, "")
+
         const isAllowed =
-          config.clientOrigins.includes(origin) ||
-          (!config.isProduction && /^http:\/\/localhost(:\d+)?$/.test(origin))
+          config.clientOrigins.includes(normalizedOrigin) ||
+          normalizedOrigin === "https://jeya-greens-co.vercel.app" ||
+          /^https:\/\/jeya-greens-co(-[a-z0-9-]+)?\.vercel\.app$/i.test(normalizedOrigin) ||
+          (!config.isProduction && /^http:\/\/localhost(:\d+)?$/.test(normalizedOrigin))
 
         if (isAllowed) {
           return callback(null, true)
@@ -42,7 +46,9 @@ export function createApp() {
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      exposedHeaders: ["Set-Cookie"],
       maxAge: 600,
+      optionsSuccessStatus: 204,
     }),
   )
 
