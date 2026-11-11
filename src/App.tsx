@@ -13,7 +13,16 @@ import {
 
 gsap.registerPlugin(ScrollTrigger)
 
+// Stops the pinned hero from refreshing/jumping when the mobile address bar shows/hides
+ScrollTrigger.config({ ignoreMobileResize: true })
+
 const A = "/assets"
+
+// Sections that can be highlighted in the navigation (order = page order)
+const NAV_SECTION_IDS = ["products", "story", "process", "gallery", "contact"]
+
+// Tablet range = 2-column gallery layout in CSS (601px – 900px)
+const TABLET_QUERY = "(min-width: 601px) and (max-width: 900px)"
 
 // Initial product data preserved as fallback and default state
 const defaultProducts: ProductItem[] = [
@@ -39,6 +48,11 @@ const defaultGallery: GalleryItem[] = [
     _id: "init-g3",
     image: "df085.png",
     caption: "Chat with customers for questions or changes.",
+  },
+  {
+    _id: "init-g4",
+    image: "f4680.png",
+    caption: "Shop only the orders you want.",
   },
 ]
 
@@ -170,6 +184,14 @@ function PublicWebsite() {
   const [navFilled, setNavFilled] = useState(false)
   const menuOpenRef = useRef(false)
 
+  // Which section is currently in view (for nav highlighting)
+  const [activeSection, setActiveSection] = useState<string | null>(null)
+
+  // Tablet detection (gallery shows 4 cards in a 2x2 grid on tablet)
+  const [isTablet, setIsTablet] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia(TABLET_QUERY).matches : false,
+  )
+
   // Dynamic API state with initial fallbacks
   const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
   const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
@@ -224,6 +246,15 @@ function PublicWebsite() {
     }
   }, [categoryOpen])
 
+  // Track tablet breakpoint
+  useEffect(() => {
+    const mql = window.matchMedia(TABLET_QUERY)
+    const onChange = () => setIsTablet(mql.matches)
+    onChange()
+    mql.addEventListener("change", onChange)
+    return () => mql.removeEventListener("change", onChange)
+  }, [])
+
   // Fetch dynamic products and gallery from backend
   useEffect(() => {
     let active = true
@@ -267,7 +298,7 @@ function PublicWebsite() {
 
       gsap.set(".hero-coconut-mask", {
         force3D: true,
-        transformOrigin: "50% 24%",
+        transformOrigin: "50% 23.5%",
         scale: getMaskStartScale,
         opacity: 1,
       })
@@ -287,7 +318,8 @@ function PublicWebsite() {
             start: "top top",
             end: () =>
               `+=${window.innerHeight * (window.innerWidth < 768 ? 2.2 : 2.8)}`,
-            scrub: true,
+            // small smoothing removes the jitter/flicker while scrubbing the mask
+            scrub: 0.5,
             pin: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
@@ -299,13 +331,15 @@ function PublicWebsite() {
           { yPercent: -100, duration: 1, ease: "none" },
           0,
         )
-        .to(
+        // fromTo with an explicit start scale = no value-recording glitch on refresh / reverse scroll
+        .fromTo(
           ".hero-coconut-mask",
+          { scale: getMaskStartScale },
           {
             scale: 13.8,
             duration: 2,
             ease: "none",
-            overwrite: "auto",
+            force3D: true,
           },
           0.85,
         )
@@ -343,6 +377,9 @@ function PublicWebsite() {
     return () => context.revert()
   }, [])
 
+  // Number of gallery cards: 4 on tablet (2x2 grid), 3 everywhere else
+  const galleryCount = isTablet ? Math.min(4, gallery.length) : 3
+
   useEffect(() => {
     if (!root.current) return
     gsap.fromTo(".gallery-card", { x: 24, opacity: 0 }, {
@@ -352,7 +389,7 @@ function PublicWebsite() {
       stagger: 0.08,
       ease: "power2.out",
     })
-  }, [galleryStart, gallery])
+  }, [galleryStart, gallery, galleryCount])
 
   useEffect(() => {
     menuOpenRef.current = menuOpen
@@ -400,7 +437,65 @@ function PublicWebsite() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
+  // Scroll-spy: highlight the nav link of the section currently in view (desktop + mobile menu)
+  useEffect(() => {
+    let ticking = false
+
+    const updateActiveSection = () => {
+      ticking = false
+      const line = window.innerHeight * 0.35
+      let current: string | null = null
+
+      for (const id of NAV_SECTION_IDS) {
+        const el = document.getElementById(id)
+        if (!el) continue
+        const rect = el.getBoundingClientRect()
+        if (rect.top <= line && rect.bottom > line) {
+          current = id
+          break
+        }
+      }
+
+      // Reached the very bottom of the page -> contact/footer
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4
+      if (atBottom) current = "contact"
+
+      setActiveSection((prev) => (prev === current ? prev : current))
+    }
+
+    const onScrollOrResize = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateActiveSection)
+        ticking = true
+      }
+    }
+
+    updateActiveSection()
+    const initTimer = window.setTimeout(updateActiveSection, 400)
+
+    window.addEventListener("scroll", onScrollOrResize, { passive: true })
+    window.addEventListener("resize", onScrollOrResize)
+    window.addEventListener("load", onScrollOrResize)
+    return () => {
+      window.clearTimeout(initTimer)
+      window.removeEventListener("scroll", onScrollOrResize)
+      window.removeEventListener("resize", onScrollOrResize)
+      window.removeEventListener("load", onScrollOrResize)
+    }
+  }, [])
+
   const closeMenu = () => setMenuOpen(false)
+
+  // Helper: props for nav links so the active one is highlighted
+  const navLink = (id: string, extraClass = "") => {
+    const isActive = activeSection === id
+    return {
+      className: `${extraClass} ${isActive ? "is-active" : ""}`.trim() || undefined,
+      "aria-current": isActive ? ("true" as const) : undefined,
+    }
+  }
 
   const moveGallery = (direction: number) => {
     if (gallery.length === 0) return
@@ -539,12 +634,15 @@ function PublicWebsite() {
       >
         <BrandLogo />
         <nav className="desktop-nav" aria-label="Primary navigation">
-          <a href="#products">Our Product</a>
-          <a href="#story">Our Story</a>
-          <a href="#process">Our Process</a>
-          <a href="#gallery">Gallery</a>
+          <a href="#products" {...navLink("products")}>Our Product</a>
+          <a href="#story" {...navLink("story")}>Our Story</a>
+          <a href="#process" {...navLink("process")}>Our Process</a>
+          <a href="#gallery" {...navLink("gallery")}>Gallery</a>
         </nav>
-        <a className="button button--green nav-cta" href="#contact">
+        <a
+          href="#contact"
+          {...navLink("contact", "button button--green nav-cta")}
+        >
           Contact Now
         </a>
         <button
@@ -560,19 +658,19 @@ function PublicWebsite() {
         </button>
         <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`}>
           <nav aria-label="Mobile navigation">
-            <a href="#products" onClick={closeMenu}>
+            <a href="#products" onClick={closeMenu} {...navLink("products")}>
               Our Product
             </a>
-            <a href="#story" onClick={closeMenu}>
+            <a href="#story" onClick={closeMenu} {...navLink("story")}>
               Our Story
             </a>
-            <a href="#process" onClick={closeMenu}>
+            <a href="#process" onClick={closeMenu} {...navLink("process")}>
               Our Process
             </a>
-            <a href="#gallery" onClick={closeMenu}>
+            <a href="#gallery" onClick={closeMenu} {...navLink("gallery")}>
               Gallery
             </a>
-            <a href="#contact" onClick={closeMenu}>
+            <a href="#contact" onClick={closeMenu} {...navLink("contact")}>
               Contact
             </a>
           </nav>
@@ -621,12 +719,13 @@ function PublicWebsite() {
               alt="A coconut grower resting in a plantation"
             />
             <div className="hero-plantation-shade" />
-            <img
-              className="hero-coconut-mask"
-              src={`${A}/coconut-mask.png`}
-              alt=""
-              aria-hidden="true"
-            />
+            <div className="hero-coconut-mask" aria-hidden="true">
+              <img src={`${A}/coconut-mask.png`} alt="" />
+              <span className="mask-bar mask-bar--top" />
+              <span className="mask-bar mask-bar--bottom" />
+              <span className="mask-bar mask-bar--left" />
+              <span className="mask-bar mask-bar--right" />
+            </div>
             <div className="hero-final-copy">
               <p>
                 At <strong>Jeya Greens &amp; Co</strong>, every great product
@@ -774,7 +873,7 @@ function PublicWebsite() {
                 ].map((text) => (
                   <span key={`${group}-${text}`}>
                     {text}
-                    <img src={`${A}/d681d.svg`} alt="" />
+                    <img src={`${A}/coconut_trace.png`} alt="" />
                   </span>
                 ))}
               </div>
@@ -856,7 +955,7 @@ function PublicWebsite() {
             that brings goodness closer to you.
           </p>
           <div className="gallery-grid">
-            {[0, 1, 2].map((offset) => {
+            {Array.from({ length: galleryCount }, (_, offset) => offset).map((offset) => {
               if (gallery.length === 0) return null
               const item = gallery[(galleryStart + offset) % gallery.length]
               return (
