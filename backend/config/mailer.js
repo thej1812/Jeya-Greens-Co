@@ -1,5 +1,5 @@
 /**
- * Mailer service facade - re-exports all methods from nodemailer.js
+ * Mailer service facade - re-exports active email service methods (Resend HTTPS API)
  */
-export * from "./nodemailer.js"
-export { default } from "./nodemailer.js"
+export * from "./resend.js"
+export { default } from "./resend.js"

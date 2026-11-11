@@ -1,4 +1,4 @@
-import { sendContactEmail } from "../config/nodemailer.js"
+import { sendContactEmail } from "../config/mailer.js"
 import AppError from "../utils/AppError.js"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

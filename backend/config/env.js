@@ -79,7 +79,24 @@ export const config = {
   get cloudinaryFolder() {
     return process.env.CLOUDINARY_FOLDER || "jeya-greens"
   },
-  // SMTP Configuration
+  // Resend HTTPS Email Configuration
+  get resendApiKey() {
+    return process.env.RESEND_API_KEY?.trim() || ""
+  },
+  get contactSenderEmail() {
+    return (
+      process.env.CONTACT_SENDER_EMAIL?.trim() ||
+      "Jeya Greens & Co. <onboarding@resend.dev>"
+    )
+  },
+  get contactReceiverEmail() {
+    return (
+      process.env.CONTACT_RECEIVER_EMAIL?.trim() ||
+      process.env.SMTP_USER?.trim() ||
+      ""
+    )
+  },
+  // Legacy / fallback SMTP configuration
   get smtpHost() {
     return process.env.SMTP_HOST || "smtp.gmail.com"
   },
@@ -94,12 +111,6 @@ export const config = {
   },
   get smtpPass() {
     return process.env.SMTP_PASS?.trim() || ""
-  },
-  get contactSenderEmail() {
-    return process.env.CONTACT_SENDER_EMAIL?.trim() || process.env.SMTP_USER?.trim() || ""
-  },
-  get contactReceiverEmail() {
-    return process.env.CONTACT_RECEIVER_EMAIL?.trim() || process.env.SMTP_USER?.trim() || ""
   },
   get contactTimezone() {
     return process.env.CONTACT_TIMEZONE?.trim() || "Asia/Kolkata"
