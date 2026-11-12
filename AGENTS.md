@@ -1,4 +1,4 @@
-# figma-make-app
+# jeya-greens-co
 
 React + Vite + Tailwind CSS project running inside Figma Make.
 

@@ -94,11 +94,11 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     return html.replace(`<!-- ${slotName} -->`, content)
   }
 
-  const title = config.title ?? "Figma Make App"
+  const title = config.title ?? ""
   const description = config.description ?? ""
   // Imported HTML keeps its own favicon. New Makes use PNG because Google Search does not
   // support SVG favicons, even though browsers do.
-  const favicon = config.icons?.icon ?? "/favicon.png"
+  const favicon = config.icons?.icon ?? ""
   const socialImage = config.openGraph?.image ?? ""
   const language = sanitizeHtmlValue(config.language) || "en"
   const googleAnalyticsId = sanitizeHtmlValue(
@@ -147,42 +147,42 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
         result = replaceHtmlCommentSlot(result, "figma:body-end", bodyEnd)
 
         const tags: HtmlTagDescriptor[] = []
-        if (description) {
+        if (description && !html.includes('name="description"')) {
           tags.push({
             tag: "meta",
             attrs: { name: "description", content: description },
             injectTo: "head",
           })
         }
-        if (config.robots?.index === false) {
+        if (config.robots?.index === false && !html.includes('name="robots"')) {
           tags.push({
             tag: "meta",
             attrs: { name: "robots", content: "noindex, nofollow" },
             injectTo: "head",
           })
         }
-        if (favicon) {
+        if (favicon && !html.includes('rel="icon"')) {
           tags.push({
             tag: "link",
             attrs: { rel: "icon", href: favicon },
             injectTo: "head",
           })
         }
-        if (title) {
+        if (title && !html.includes('property="og:title"')) {
           tags.push({
             tag: "meta",
             attrs: { property: "og:title", content: title },
             injectTo: "head",
           })
         }
-        if (description) {
+        if (description && !html.includes('property="og:description"')) {
           tags.push({
             tag: "meta",
             attrs: { property: "og:description", content: description },
             injectTo: "head",
           })
         }
-        if (socialImage) {
+        if (socialImage && !html.includes('property="og:image"')) {
           tags.push(
             {
               tag: "meta",
