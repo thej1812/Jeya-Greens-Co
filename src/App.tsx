@@ -1,12 +1,19 @@
-import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom"
 import AdminView from "./admin/AdminView"
+import FAQ from "./pages/Faq";
+import OurProduct from "./pages/OurProduct"
+import AboutUs from "./pages/AboutUs"
+import OurGallery from "./pages/OurGallery"
+import Review from "./pages/Review"
+import Menu from "./components/Menu"
+import Footer from "./components/Footer"
+
 import {
   fetchProducts,
   fetchGallery,
-  sendContactEnquiry,
-  ContactError,
   ProductItem,
   GalleryItem,
 } from "./services/api"
@@ -18,11 +25,9 @@ ScrollTrigger.config({ ignoreMobileResize: true })
 
 const A = "/assets"
 
-// Sections that can be highlighted in the navigation (order = page order)
-const NAV_SECTION_IDS = ["products", "story", "process", "gallery", "contact"]
-
-// Tablet range = 2-column gallery layout in CSS (601px – 900px)
-const TABLET_QUERY = "(min-width: 601px) and (max-width: 900px)"
+// Single description shown inside the gallery panel
+const GALLERY_PANEL_TEXT =
+  "Explore fresh market moments, genuine conversations and a process that brings goodness closer to you. Every picture in our gallery tells the story of honest coconut goodness, from the farm to your family's table."
 
 // Initial product data preserved as fallback and default state
 const defaultProducts: ProductItem[] = [
@@ -94,18 +99,6 @@ const faqs = [
   ],
 ]
 
-function BrandLogo({ light = false }: { light?: boolean }) {
-  return (
-    <a
-      className={`brand-logo ${light ? "brand-logo--light" : ""}`}
-      href="#top"
-      aria-label="Jeya Greens home"
-    >
-      <img src={`${A}/43927.png`} alt="Jeya Greens & Co." />
-    </a>
-  )
-}
-
 function ArrowIcon({
   direction = "down",
 }: {
@@ -127,6 +120,15 @@ function checkIsAdminRoute(): boolean {
   const path = window.location.pathname || ""
   const hash = window.location.hash || ""
   return path.startsWith("/admin") || hash.startsWith("#/admin")
+}
+
+// Scrolls to the top whenever the route (page) changes
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
 }
 
 export default function App() {
@@ -159,43 +161,41 @@ export default function App() {
     return <AdminView onBackToSite={handleBackToPublicSite} />
   }
 
-  return <PublicWebsite />
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<PublicWebsite />} />
+        
+        <Route path="/our-product" element={<OurProduct />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/gallery" element={<OurGallery />} />
+        <Route path="/reviews" element={<Review />} />
+        {/* Gallery page route: import your Gallery page, then uncomment
+        <Route path="/gallery" element={<Gallery />} /> */}
+        {/* Add more pages here, e.g.
+        <Route path="/shop" element={<Shop />} /> */}
+        <Route path="*" element={<PublicWebsite />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 function PublicWebsite() {
   const root = useRef<HTMLDivElement>(null)
   const categoryWrapRef = useRef<HTMLDivElement>(null)
   const [categoryOpen, setCategoryOpen] = useState(false)
-  const [galleryStart, setGalleryStart] = useState(0)
   const [openFaq, setOpenFaq] = useState(0)
-  const [submitted, setSubmitted] = useState(false)
-  const [contactValues, setContactValues] = useState({
-    name: "",
-    email: "",
-    enquiry: "",
-    message: "",
-  })
-  const [contactFieldErrors, setContactFieldErrors] = useState<Record<string, string>>({})
-  const [contactSubmitting, setContactSubmitting] = useState(false)
-  const [contactSuccess, setContactSuccess] = useState<string | null>(null)
-  const [contactError, setContactError] = useState<string | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [navVisible, setNavVisible] = useState(true)
-  const [navFilled, setNavFilled] = useState(false)
-  const menuOpenRef = useRef(false)
-
-  // Which section is currently in view (for nav highlighting)
-  const [activeSection, setActiveSection] = useState<string | null>(null)
-
-  // Tablet detection (gallery shows 4 cards in a 2x2 grid on tablet)
-  const [isTablet, setIsTablet] = useState<boolean>(() =>
-    typeof window !== "undefined" ? window.matchMedia(TABLET_QUERY).matches : false,
-  )
 
   // Dynamic API state with initial fallbacks
   const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
   const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // Gallery slider: which image is currently shown in the gallery panel
+  const [galleryIndex, setGalleryIndex] = useState(0)
+  const galleryFirstRender = useRef(true)
 
   // Derive unique categories automatically from loaded products
   const availableCategories = useMemo(() => {
@@ -245,15 +245,6 @@ function PublicWebsite() {
       document.removeEventListener("keydown", handleKeyDown)
     }
   }, [categoryOpen])
-
-  // Track tablet breakpoint
-  useEffect(() => {
-    const mql = window.matchMedia(TABLET_QUERY)
-    const onChange = () => setIsTablet(mql.matches)
-    onChange()
-    mql.addEventListener("change", onChange)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
 
   // Fetch dynamic products and gallery from backend
   useEffect(() => {
@@ -377,245 +368,45 @@ function PublicWebsite() {
     return () => context.revert()
   }, [])
 
-  // Number of gallery cards: 4 on tablet (2x2 grid), 3 everywhere else
-  const galleryCount = isTablet ? Math.min(4, gallery.length) : 3
-
+  // Keep the gallery slider index valid when the gallery list changes
   useEffect(() => {
-    if (!root.current) return
-    gsap.fromTo(".gallery-card", { x: 24, opacity: 0 }, {
-      x: 0,
-      opacity: 1,
-      duration: 0.45,
-      stagger: 0.08,
-      ease: "power2.out",
-    })
-  }, [galleryStart, gallery, galleryCount])
+    setGalleryIndex((prev) => (prev >= gallery.length ? 0 : prev))
+  }, [gallery])
 
+  // Fade the gallery image in whenever the slide changes
   useEffect(() => {
-    menuOpenRef.current = menuOpen
-    document.body.style.overflow = menuOpen ? "hidden" : ""
-    if (menuOpen) {
-      setNavVisible(true)
-      setNavFilled(true)
-    }
-
-    return () => {
-      document.body.style.overflow = ""
-    }
-  }, [menuOpen])
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY
-    let ticking = false
-
-    const updateNavigation = () => {
-      const currentScrollY = window.scrollY
-
-      if (currentScrollY <= 24) {
-        setNavVisible(true)
-        setNavFilled(false)
-      } else {
-        setNavFilled(true)
-        if (currentScrollY < lastScrollY - 4) setNavVisible(true)
-        if (currentScrollY > lastScrollY + 4 && !menuOpenRef.current) {
-          setNavVisible(false)
-        }
-      }
-
-      lastScrollY = currentScrollY
-      ticking = false
-    }
-
-    const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateNavigation)
-        ticking = true
-      }
-    }
-
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
-
-  // Scroll-spy: highlight the nav link of the section currently in view (desktop + mobile menu)
-  useEffect(() => {
-    let ticking = false
-
-    const updateActiveSection = () => {
-      ticking = false
-      const line = window.innerHeight * 0.35
-      let current: string | null = null
-
-      for (const id of NAV_SECTION_IDS) {
-        const el = document.getElementById(id)
-        if (!el) continue
-        const rect = el.getBoundingClientRect()
-        if (rect.top <= line && rect.bottom > line) {
-          current = id
-          break
-        }
-      }
-
-      // Reached the very bottom of the page -> contact/footer
-      const atBottom =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 4
-      if (atBottom) current = "contact"
-
-      setActiveSection((prev) => (prev === current ? prev : current))
-    }
-
-    const onScrollOrResize = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateActiveSection)
-        ticking = true
-      }
-    }
-
-    updateActiveSection()
-    const initTimer = window.setTimeout(updateActiveSection, 400)
-
-    window.addEventListener("scroll", onScrollOrResize, { passive: true })
-    window.addEventListener("resize", onScrollOrResize)
-    window.addEventListener("load", onScrollOrResize)
-    return () => {
-      window.clearTimeout(initTimer)
-      window.removeEventListener("scroll", onScrollOrResize)
-      window.removeEventListener("resize", onScrollOrResize)
-      window.removeEventListener("load", onScrollOrResize)
-    }
-  }, [])
-
-  const closeMenu = () => setMenuOpen(false)
-
-  // Helper: props for nav links so the active one is highlighted
-  const navLink = (id: string, extraClass = "") => {
-    const isActive = activeSection === id
-    return {
-      className: `${extraClass} ${isActive ? "is-active" : ""}`.trim() || undefined,
-      "aria-current": isActive ? ("true" as const) : undefined,
-    }
-  }
-
-  const moveGallery = (direction: number) => {
-    if (gallery.length === 0) return
-    setGalleryStart(
-      (current) => (current + direction + gallery.length) % gallery.length,
-    )
-  }
-
-  const handleContactChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target
-    setContactValues((prev) => ({ ...prev, [name]: value }))
-    if (contactFieldErrors[name]) {
-      setContactFieldErrors((prev) => {
-        const next = { ...prev }
-        delete next[name]
-        return next
-      })
-    }
-    if (contactError) {
-      setContactError(null)
-    }
-  }
-
-  const validateContactForm = () => {
-    const errors: Record<string, string> = {}
-    const name = contactValues.name.trim()
-    const email = contactValues.email.trim()
-    const enquiry = contactValues.enquiry.trim()
-    const message = contactValues.message.trim()
-
-    if (!name) {
-      errors.name = "Please enter your name."
-    } else if (name.length < 2) {
-      errors.name = "Name must be at least 2 characters."
-    } else if (name.length > 100) {
-      errors.name = "Name must be 100 characters or fewer."
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!email) {
-      errors.email = "Please enter your email address."
-    } else if (!emailRegex.test(email) || email.length > 150) {
-      errors.email = "Please enter a valid email address."
-    }
-
-    if (!enquiry) {
-      errors.enquiry = "Please enter an enquiry topic."
-    } else if (enquiry.length < 2) {
-      errors.enquiry = "Enquiry must be at least 2 characters."
-    } else if (enquiry.length > 150) {
-      errors.enquiry = "Enquiry must be 150 characters or fewer."
-    }
-
-    if (!message) {
-      errors.message = "Please provide your message."
-    } else if (message.length < 2) {
-      errors.message = "Message must be at least 2 characters."
-    } else if (message.length > 3000) {
-      errors.message = "Message must be 3000 characters or fewer."
-    }
-
-    return errors
-  }
-
-  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (contactSubmitting) return
-
-    setContactError(null)
-    setContactSuccess(null)
-
-    const form = event.currentTarget
-
-    const errors = validateContactForm()
-    if (Object.keys(errors).length > 0) {
-      setContactFieldErrors(errors)
-      setContactError("Please correct the highlighted fields.")
+    if (galleryFirstRender.current) {
+      galleryFirstRender.current = false
       return
     }
+    if (!root.current) return
+    gsap.fromTo(
+      ".gallery-frame-img",
+      { x: 24, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+    )
+    gsap.fromTo(
+      ".gallery-panel-text p",
+      { y: 12, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" },
+    )
+  }, [galleryIndex])
 
-    setContactFieldErrors({})
-    setContactSubmitting(true)
+  // Auto-advance the gallery every 2 seconds (timer restarts after a manual arrow click)
+  useEffect(() => {
+    if (gallery.length < 2) return
+    const timer = window.setTimeout(() => {
+      setGalleryIndex((i) => (i + 1) % gallery.length)
+    }, 2000)
+    return () => window.clearTimeout(timer)
+  }, [galleryIndex, gallery.length])
 
-    try {
-      const confirmation = await sendContactEnquiry({
-        name: contactValues.name.trim(),
-        email: contactValues.email.trim(),
-        enquiry: contactValues.enquiry.trim(),
-        message: contactValues.message.trim(),
-      })
-      setContactSuccess(confirmation)
-      setContactValues({ name: "", email: "", enquiry: "", message: "" })
-      setSubmitted(true)
-      form.reset()
-      gsap.fromTo(
-        ".form-success",
-        { y: 8, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.35,
-        },
-      )
-    } catch (err) {
-      if (err instanceof ContactError) {
-        setContactError(err.message)
-        if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
-          setContactFieldErrors(err.fieldErrors)
-        }
-      } else if (err instanceof Error) {
-        setContactError(err.message)
-      } else {
-        setContactError("Failed to send your message. Please try again later.")
-      }
-    } finally {
-      setContactSubmitting(false)
-    }
-  }
+  const goPrevGallery = () =>
+    setGalleryIndex((i) => (gallery.length ? (i - 1 + gallery.length) % gallery.length : 0))
+  const goNextGallery = () =>
+    setGalleryIndex((i) => (gallery.length ? (i + 1) % gallery.length : 0))
+
+  const currentGalleryItem = gallery[galleryIndex] || gallery[0]
 
   const displayedProducts = selectedCategory
     ? products.filter(
@@ -627,61 +418,7 @@ function PublicWebsite() {
 
   return (
     <div ref={root} id="top" className="site-shell">
-      <header
-        className={`nav ${navVisible ? "nav--visible" : "nav--hidden"} ${
-          navFilled ? "nav--filled" : ""
-        } ${menuOpen ? "nav--menu-open" : ""}`}
-      >
-        <BrandLogo />
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          <a href="#products" {...navLink("products")}>Our Product</a>
-          <a href="#story" {...navLink("story")}>Our Story</a>
-          <a href="#process" {...navLink("process")}>Our Process</a>
-          <a href="#gallery" {...navLink("gallery")}>Gallery</a>
-        </nav>
-        <a
-          href="#contact"
-          {...navLink("contact", "button button--green nav-cta")}
-        >
-          Contact Now
-        </a>
-        <button
-          className="menu-toggle"
-          type="button"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`}>
-          <nav aria-label="Mobile navigation">
-            <a href="#products" onClick={closeMenu} {...navLink("products")}>
-              Our Product
-            </a>
-            <a href="#story" onClick={closeMenu} {...navLink("story")}>
-              Our Story
-            </a>
-            <a href="#process" onClick={closeMenu} {...navLink("process")}>
-              Our Process
-            </a>
-            <a href="#gallery" onClick={closeMenu} {...navLink("gallery")}>
-              Gallery
-            </a>
-            <a href="#contact" onClick={closeMenu} {...navLink("contact")}>
-              Contact
-            </a>
-          </nav>
-          <div className="mobile-menu-meta">
-            <p>
-              <strong>Jeya Greens &amp; Co.</strong>
-            </p>
-            <p>Natural coconut goodness, thoughtfully made.</p>
-          </div>
-        </div>
-      </header>
+      <Menu />
 
       <main>
         <section className="hero">
@@ -696,10 +433,11 @@ function PublicWebsite() {
             <div className="hero-intro">
               <h1 className="hero-title ">
                 <span>
-                  <span className="line">Plants That</span>
+                  <span className="line">Crack Open</span>
                 </span>
                 <span>
-                  <span className="line">Make You Smile</span>
+                  <span className="line">Pure
+Goodness</span>
                 </span>
               </h1>
               <p>
@@ -707,9 +445,9 @@ function PublicWebsite() {
                 <br />
                 life-enhancing plants
               </p>
-              <a className="button button--green" href="#products">
-                Shop Now
-              </a>
+              <Link className="button button--green" to="/our-product">
+  Shop Now
+</Link>
             </div>
           </div>
           <div className="hero-transition">
@@ -728,13 +466,13 @@ function PublicWebsite() {
             </div>
             <div className="hero-final-copy">
               <p>
-                At <strong>Jeya Greens &amp; Co</strong>, every great product
-                begins with the goodness of nature and carefully sourced
-                coconuts.
+                At <strong>Jeya Greens &amp; Co</strong>, every product
+begins with responsibly sourced coconuts, selectively purchased from trusted
+farmers.
               </p>
               <p>
-                From pure coconut oil to traditional sweets, we bring coconut
-                goodness to everyday life.
+                From farm fresh coconuts
+into VCO and healthy coconut beverages, and wholesome snacks.
               </p>
               <p>
                 Celebrating familiar flavours and the timeless goodness of
@@ -890,18 +628,23 @@ function PublicWebsite() {
 
           <div className="story-copy" data-reveal>
             <p>
-              At <strong>Jeya Greens &amp; Co</strong>, our journey begins with a
-              deep-rooted love for coconuts and the goodness they bring to
-              everyday life.
+              At <strong>Jeya Greens &amp; Co</strong>, Our journey began with a simple yet powerful mission: to
+bring the purest, most authentic gifts of nature directly from the farm to your family&#39;s
+table. Inspired by traditional agricultural heritage, we set out to craft coconut and
+food essentials that honor natural goodness without compromise.
             </p>
             <p>
-              With a commitment to quality and a passion for preserving
-              traditional flavours, we bring together the richness of nature and
-              the art of thoughtful craftsmanship.
+              It all began with a simple commitment to purity extracting cold-pressed Virgin
+Coconut Oil the way nature intended, without compromises or chemical shortcuts.
+But as our roots took hold, so did a bigger vision: to bring that same unadulterated
+goodness to every corner of your kitchen.
             </p>
             <p>
-              Every product reflects our belief in nature, quality and the
-              simple joy of sharing goodness with every family.
+              We believe that good health starts with honest food. That is why our products remain
+free from artificial additives, preserving the essential antioxidants, healthy medium-
+chain fats, and natural flavors that nature intended. At JEYA GREENS &amp; CO, we
+aren&#39;t just making food; we are creating a healthier, higher-quality lifestyle for
+generations to come.
             </p>
           </div>
           <div className="founder" data-reveal>
@@ -935,11 +678,11 @@ function PublicWebsite() {
               alt="Coconuts, sweets and Jeya Greens products"
             />
             {[
-              "Natural Source",
-              "Hand Selected",
-              "Made Fresh",
-              "Packed With Care",
-              "Shared With Joy",
+              "Pure Sourcing",
+              "Touchless Craft",
+              "Quality Extract",
+              "Chemical-Free Foods",
+              "Sealed Delivery",
             ].map((step, i) => (
               <span className={`process-step step-${i + 1}`} key={step}>
                 {step}
@@ -950,65 +693,74 @@ function PublicWebsite() {
 
         <section id="gallery" className="gallery section-pad">
           <h2 data-reveal>Our Gallery</h2>
-          <p data-reveal>
+          <p className="gallery-desc" data-reveal>
             Explore fresh market moments, genuine conversations and a process
             that brings goodness closer to you.
           </p>
-          <div className="gallery-grid">
-            {Array.from({ length: galleryCount }, (_, offset) => offset).map((offset) => {
-              if (gallery.length === 0) return null
-              const item = gallery[(galleryStart + offset) % gallery.length]
-              return (
-                <article
-                  className="gallery-card"
-                  key={`${galleryStart}-${offset}-${item._id || item.image}`}
-                >
+
+          <div className="gallery-panel" data-reveal>
+            <div className="gallery-panel-text">
+              <p>{currentGalleryItem?.caption || GALLERY_PANEL_TEXT}</p>
+            </div>
+
+            <div className="gallery-panel-media">
+              <div className="gallery-frame">
+                {currentGalleryItem && (
                   <img
-                    src={item.image.startsWith("http") ? item.image : `${A}/${item.image}`}
-                    alt={item.caption}
+                    className="gallery-frame-img"
+                    src={
+                      currentGalleryItem.image.startsWith("http")
+                        ? currentGalleryItem.image
+                        : `${A}/${currentGalleryItem.image}`
+                    }
+                    alt={currentGalleryItem.caption || "Jeya Greens gallery"}
                   />
-                  <p>{item.caption}</p>
-                </article>
-              )
-            })}
+                )}
+                <div className="gallery-arrows">
+                  <button
+                    type="button"
+                    className="gallery-arrow"
+                    onClick={goPrevGallery}
+                    aria-label="Previous image"
+                  >
+                    &larr;
+                  </button>
+                  <button
+                    type="button"
+                    className="gallery-arrow"
+                    onClick={goNextGallery}
+                    aria-label="Next image"
+                  >
+                    &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="gallery-controls">
-            <button
-              onClick={() => moveGallery(-1)}
-              aria-label="Previous gallery image"
-            >
-              <ArrowIcon direction="left" />
-            </button>
-            <button
-              onClick={() => moveGallery(1)}
-              aria-label="Next gallery image"
-            >
-              <ArrowIcon direction="right" />
-            </button>
-          </div>
+
+          <Link className="button button--green gallery-cta" to="/gallery">
+            Explore more
+          </Link>
         </section>
 
         <section className="reviews section-pad">
-          <h2 data-reveal>What People says ?</h2>
+          <h2 data-reveal>What Scientists Say?</h2>
           <div className="review-grid">
             {reviews.map((review) => (
               <article className="review-card" data-reveal key={review.name}>
-                <img className="review-avatar" src={`${A}/f3931.png`} alt="" />
-                <div className="stars">
-                  {[0, 1, 2, 3, 4].map((star) => (
-                    <img src={`${A}/d751f.svg`} alt="" key={star} />
-                  ))}
-                </div>
+                
                 <p>{review.text}</p>
                 <strong>From: {review.name}</strong>
               </article>
             ))}
           </div>
-          <button className="button button--cream">See More</button>
+          <button className="button button--cream" >
+            See More
+          </button>
         </section>
 
         <section className="faq section-pad">
-          <h2 data-reveal>What People says ?</h2>
+          <h2 data-reveal>FAQ</h2>
           <div className="faq-list" data-reveal>
             {faqs.map(([question, answer], index) => (
               <article
@@ -1033,182 +785,7 @@ function PublicWebsite() {
         </section>
       </main>
 
-      <footer id="contact" className="footer section-pad">
-        <div className="footer-top">
-          <div>
-            <BrandLogo light />
-            <form onSubmit={submitForm} noValidate>
-              <h2>Contact us</h2>
-
-              <div>
-                <input
-                  name="name"
-                  placeholder="Name"
-                  aria-label="Name"
-                  value={contactValues.name}
-                  onChange={handleContactChange}
-                  disabled={contactSubmitting}
-                  style={
-                    contactFieldErrors.name
-                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
-                      : undefined
-                  }
-                />
-                {contactFieldErrors.name && (
-                  <span
-                    style={{
-                      color: "#ffd2cc",
-                      fontSize: "13px",
-                      marginTop: "6px",
-                      display: "block",
-                    }}
-                  >
-                    {contactFieldErrors.name}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  aria-label="Email"
-                  value={contactValues.email}
-                  onChange={handleContactChange}
-                  disabled={contactSubmitting}
-                  style={
-                    contactFieldErrors.email
-                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
-                      : undefined
-                  }
-                />
-                {contactFieldErrors.email && (
-                  <span
-                    style={{
-                      color: "#ffd2cc",
-                      fontSize: "13px",
-                      marginTop: "6px",
-                      display: "block",
-                    }}
-                  >
-                    {contactFieldErrors.email}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <input
-                  name="enquiry"
-                  placeholder="Enquire"
-                  aria-label="Enquiry"
-                  value={contactValues.enquiry}
-                  onChange={handleContactChange}
-                  disabled={contactSubmitting}
-                  style={
-                    contactFieldErrors.enquiry
-                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
-                      : undefined
-                  }
-                />
-                {contactFieldErrors.enquiry && (
-                  <span
-                    style={{
-                      color: "#ffd2cc",
-                      fontSize: "13px",
-                      marginTop: "6px",
-                      display: "block",
-                    }}
-                  >
-                    {contactFieldErrors.enquiry}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <textarea
-                  name="message"
-                  placeholder="Message"
-                  aria-label="Message"
-                  value={contactValues.message}
-                  onChange={handleContactChange}
-                  disabled={contactSubmitting}
-                  style={
-                    contactFieldErrors.message
-                      ? { borderColor: "#f87171", outline: "1px solid #f87171" }
-                      : undefined
-                  }
-                />
-                {contactFieldErrors.message && (
-                  <span
-                    style={{
-                      color: "#ffd2cc",
-                      fontSize: "13px",
-                      marginTop: "6px",
-                      display: "block",
-                    }}
-                  >
-                    {contactFieldErrors.message}
-                  </span>
-                )}
-              </div>
-
-              <button
-                className="button button--cream"
-                type="submit"
-                disabled={contactSubmitting}
-              >
-                {contactSubmitting ? "Sending..." : "Send Message"}
-              </button>
-              {contactSuccess && (
-                <p className="form-success" role="status">
-                  {contactSuccess}
-                </p>
-              )}
-              {contactError && (
-                <p
-                  className="form-error"
-                  role="alert"
-                  style={{
-                    color: "#ffd2cc",
-                    fontSize: "14px",
-                    marginTop: "6px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {contactError}
-                </p>
-              )}
-            </form>
-          </div>
-          <div className="footer-links">
-            <div>
-              <strong>Quick Links</strong>
-              <a href="#story">Our Story</a>
-              <a href="#process">Our Process</a>
-              <a href="#gallery">Gallery</a>
-            </div>
-            <div>
-              <strong>Links</strong>
-              <a href="#contact">Location</a>
-              <a href="#contact">Whatsapp</a>
-              <a href="#contact">Instagram</a>
-            </div>
-          </div>
-          <img
-            className="footer-bottles"
-            src={`${A}/9ea99.png`}
-            alt="Two bottles of golden coconut oil"
-          />
-        </div>
-        <div className="footer-bottom">
-          <p>Copyright 2026 — JEYA GREENS &amp; CO.</p>
-          <p>
-            <a href="#top">Terms of services</a>
-            <a href="#top">Privacy Policy</a>
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
