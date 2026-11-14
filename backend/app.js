@@ -55,8 +55,8 @@ export function createApp() {
   app.use(cookieParser)
   app.use(express.json({ limit: "100kb" }))
 
-  // Public health check
-  app.get("/api/health", (_req, res) => {
+  // Public health check (supports both /api/health and /health)
+  app.get(["/api/health", "/health"], (_req, res) => {
     res.json({
       success: true,
       data: {
@@ -67,13 +67,13 @@ export function createApp() {
     })
   })
 
-  // API endpoints
-  app.use("/api/auth", authRoutes)
-  app.use("/api/products", productRoutes)
-  app.use("/api/gallery", galleryRoutes)
-  app.use("/api/admin", dashboardRoutes)
-  app.use("/api/contact", contactRoutes)
-  app.use("/api/categories", categoryRoutes)
+  // API endpoints (mounted under both /api and root fallback for client resilience)
+  app.use(["/api/auth", "/auth"], authRoutes)
+  app.use(["/api/products", "/products"], productRoutes)
+  app.use(["/api/gallery", "/gallery"], galleryRoutes)
+  app.use(["/api/admin", "/admin"], dashboardRoutes)
+  app.use(["/api/contact", "/contact"], contactRoutes)
+  app.use(["/api/categories", "/categories"], categoryRoutes)
 
   // 404 & Global error handlers
   app.use(notFound)

@@ -3,7 +3,12 @@
  * Handles product, gallery, authentication, and admin endpoints.
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/$/, "")
+function resolveApiBase(): string {
+  const envUrl = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").trim().replace(/\/+$/, "")
+  return envUrl.endsWith("/api") ? envUrl : `${envUrl}/api`
+}
+
+const API_BASE = resolveApiBase()
 
 // Session-based in-memory token storage (also backed by sessionStorage for page reloads)
 let inMemoryToken: string | null = null
