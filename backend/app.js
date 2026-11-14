@@ -11,6 +11,7 @@ import galleryRoutes from "./routes/galleryRoutes.js"
 import dashboardRoutes from "./routes/dashboardRoutes.js"
 import contactRoutes from "./routes/contactRoutes.js"
 import categoryRoutes from "./routes/categoryRoutes.js"
+import testimonialRoutes from "./routes/testimonialRoutes.js"
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js"
 
 export function createApp() {
@@ -74,6 +75,7 @@ export function createApp() {
   app.use(["/api/admin", "/admin"], dashboardRoutes)
   app.use(["/api/contact", "/contact"], contactRoutes)
   app.use(["/api/categories", "/categories"], categoryRoutes)
+  app.use(["/api/testimonials", "/testimonials"], testimonialRoutes)
 
   // 404 & Global error handlers
   app.use(notFound)

@@ -10,12 +10,14 @@ import OurGallery from "./pages/OurGallery"
 import Review from "./pages/Review"
 import Menu from "./components/Menu"
 import Footer from "./components/Footer"
-
+import Contact from "./pages/Contact"
 import {
   fetchProducts,
   fetchGallery,
+  fetchTestimonials,
   ProductItem,
   GalleryItem,
+  TestimonialItem,
 } from "./services/api"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -61,16 +63,19 @@ const defaultGallery: GalleryItem[] = [
   },
 ]
 
-const reviews = [
+const defaultReviews: (TestimonialItem | { _id?: string; name: string; text: string })[] = [
   {
+    _id: "init-rev-1",
     name: "Sophia Jenkins",
     text: "The freshness and care are obvious in every product. It feels honest, thoughtful and deeply connected to nature.",
   },
   {
+    _id: "init-rev-2",
     name: "Maya Wilson",
     text: "Beautifully made coconut essentials with flavours that remind me of home. The quality is consistently wonderful.",
   },
   {
+    _id: "init-rev-3",
     name: "Arun Kumar",
     text: "From the coconut oil to the traditional sweets, every order has arrived fresh, carefully packed and full of goodness.",
   },
@@ -172,6 +177,7 @@ export default function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/gallery" element={<OurGallery />} />
         <Route path="/reviews" element={<Review />} />
+           <Route path="/contact" element={<Contact />} />
         {/* Gallery page route: import your Gallery page, then uncomment
         <Route path="/gallery" element={<Gallery />} /> */}
         {/* Add more pages here, e.g.
@@ -191,6 +197,7 @@ function PublicWebsite() {
   // Dynamic API state with initial fallbacks
   const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
   const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
+  const [reviews, setReviews] = useState<(TestimonialItem | { _id?: string; name: string; text: string })[]>(defaultReviews)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   // Gallery slider: which image is currently shown in the gallery panel
@@ -252,9 +259,10 @@ function PublicWebsite() {
 
     async function loadData() {
       try {
-        const [apiProducts, apiGallery] = await Promise.all([
+        const [apiProducts, apiGallery, apiTestimonials] = await Promise.all([
           fetchProducts().catch(() => null),
           fetchGallery().catch(() => null),
+          fetchTestimonials().catch(() => null),
         ])
 
         if (!active) return
@@ -264,6 +272,9 @@ function PublicWebsite() {
         }
         if (apiGallery && apiGallery.length > 0) {
           setGallery(apiGallery)
+        }
+        if (apiTestimonials && apiTestimonials.length > 0) {
+          setReviews(apiTestimonials)
         }
 
         // Refresh GSAP ScrollTrigger after content renders
@@ -746,17 +757,16 @@ generations to come.
         <section className="reviews section-pad">
           <h2 data-reveal>What Scientists Say?</h2>
           <div className="review-grid">
-            {reviews.map((review) => (
-              <article className="review-card" data-reveal key={review.name}>
-                
+            {reviews.map((review, idx) => (
+              <article className="review-card" data-reveal key={(review as any)._id || review.name || idx}>
                 <p>{review.text}</p>
                 <strong>From: {review.name}</strong>
               </article>
             ))}
           </div>
-          <button className="button button--cream" >
+          <Link className="button button--cream" to="/reviews">
             See More
-          </button>
+          </Link>
         </section>
 
         <section className="faq section-pad">

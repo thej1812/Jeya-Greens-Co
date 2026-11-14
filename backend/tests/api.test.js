@@ -512,4 +512,82 @@ describe("Coconut API Integration Tests (Native HTTP via Named Pipe)", () => {
     assert.equal(res.status, 403)
     assert.equal(res.headers["access-control-allow-origin"], undefined)
   })
+
+  it("GET /api/testimonials should return 200 and testimonials array", async () => {
+    const res = await apiRequest({ method: "GET", path: "/api/testimonials" })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.ok(Array.isArray(body.data))
+  })
+
+  it("POST /api/testimonials should reject unauthenticated requests with 401", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/testimonials",
+      body: { name: "Test User", text: "Great products!" },
+    })
+    assert.equal(res.status, 401)
+  })
+
+  let createdTestimonialId
+  it("POST /api/testimonials should create testimonial when authenticated with 201", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/testimonials",
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { name: "Ananya Rao", text: "Exceptional quality and authentic flavor." },
+    })
+    assert.equal(res.status, 201)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.equal(body.data.name, "Ananya Rao")
+    assert.equal(body.data.text, "Exceptional quality and authentic flavor.")
+    createdTestimonialId = body.data._id
+  })
+
+  it("GET /api/testimonials/:id should return single testimonial with 200", async () => {
+    assert.ok(createdTestimonialId)
+    const res = await apiRequest({
+      method: "GET",
+      path: `/api/testimonials/${createdTestimonialId}`,
+    })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.equal(body.data.name, "Ananya Rao")
+  })
+
+  it("PUT /api/testimonials/:id should update testimonial when authenticated with 200", async () => {
+    assert.ok(createdTestimonialId)
+    const res = await apiRequest({
+      method: "PUT",
+      path: `/api/testimonials/${createdTestimonialId}`,
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { name: "Ananya Rao", text: "Updated: Truly exceptional coconut products!" },
+    })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.equal(body.data.text, "Updated: Truly exceptional coconut products!")
+  })
+
+  it("DELETE /api/testimonials/:id should delete testimonial when authenticated with 200", async () => {
+    assert.ok(createdTestimonialId)
+    const res = await apiRequest({
+      method: "DELETE",
+      path: `/api/testimonials/${createdTestimonialId}`,
+      headers: { Authorization: `Bearer ${adminToken}` },
+    })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+
+    // Confirm it's gone
+    const checkRes = await apiRequest({
+      method: "GET",
+      path: `/api/testimonials/${createdTestimonialId}`,
+    })
+    assert.equal(checkRes.status, 404)
+  })
 })

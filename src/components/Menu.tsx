@@ -133,11 +133,12 @@ export default function Menu() {
         <a href="/gallery" {...navLink("gallery")}>Gallery</a>
                 <a href="/reviews" {...navLink("reviews")}>Testimonials</a>
         <a href="/faq" {...navLink("process")}>FAQ</a>
+        
 
 
       </nav>
       <a
-        href="#contact"
+        href="/contact"
         {...navLink("contact", "button button--green nav-cta")}
       >
         Contact Now
@@ -173,7 +174,7 @@ export default function Menu() {
           </a>
           
           
-          <a href="#contact" onClick={closeMenu} {...navLink("contact")}>
+          <a href="/contact" onClick={closeMenu} {...navLink("contact")}>
             Contact
           </a>
         </nav>

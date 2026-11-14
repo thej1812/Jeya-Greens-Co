@@ -72,6 +72,14 @@ export interface GalleryItem {
   updatedAt?: string
 }
 
+export interface TestimonialItem {
+  _id: string
+  name: string
+  text: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   message?: string
@@ -327,6 +335,72 @@ export async function deleteGalleryItem(id: string): Promise<void> {
   const json = await res.json()
   if (!res.ok || !json.success) {
     throw new Error(json.message || "Failed to delete gallery image.")
+  }
+}
+
+// ==========================================
+// Testimonial Endpoints (Public + Admin)
+// ==========================================
+
+export async function fetchTestimonials(): Promise<TestimonialItem[]> {
+  const res = await fetch(`${API_BASE}/testimonials`, {
+    headers: { Accept: "application/json" },
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to load testimonials (HTTP ${res.status})`)
+  }
+  const json: ApiResponse<TestimonialItem[]> = await res.json()
+  return json.data || []
+}
+
+export async function createTestimonial(data: { name: string; text: string }): Promise<TestimonialItem> {
+  const res = await fetch(`${API_BASE}/testimonials`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getAuthHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify(data),
+  })
+
+  const json: ApiResponse<TestimonialItem> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to create testimonial.")
+  }
+  return json.data
+}
+
+export async function updateTestimonial(id: string, data: { name: string; text: string }): Promise<TestimonialItem> {
+  const res = await fetch(`${API_BASE}/testimonials/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...getAuthHeaders(),
+    },
+    credentials: "include",
+    body: JSON.stringify(data),
+  })
+
+  const json: ApiResponse<TestimonialItem> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to update testimonial.")
+  }
+  return json.data
+}
+
+export async function deleteTestimonial(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/testimonials/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+    credentials: "include",
+  })
+
+  const json = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "Failed to delete testimonial.")
   }
 }
 

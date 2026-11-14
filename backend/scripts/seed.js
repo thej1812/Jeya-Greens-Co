@@ -14,6 +14,7 @@ import { connectDB, disconnectDB } from "../config/db.js"
 import { uploadImage } from "../config/cloudinary.js"
 import Product from "../models/Product.js"
 import Gallery from "../models/Gallery.js"
+import { seedInitialTestimonials } from "../controllers/testimonialController.js"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const assetsDir = path.resolve(
@@ -72,6 +73,7 @@ try {
 
   await seedCollection(Product, initialProducts, "products", "Products", true)
   await seedCollection(Gallery, initialGallery, "gallery", "Gallery", false)
+  await seedInitialTestimonials()
 
   console.log("Data migration completed successfully.")
 } catch (error) {

@@ -8,9 +8,14 @@ import {
   createGalleryItem,
   updateGalleryItem,
   deleteGalleryItem,
+  fetchTestimonials,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
   logoutAdmin,
   ProductItem,
   GalleryItem,
+  TestimonialItem,
 } from "../services/api"
 
 interface AdminDashboardProps {
@@ -19,7 +24,7 @@ interface AdminDashboardProps {
   onBackToSite: () => void
 }
 
-type TabType = "products" | "gallery"
+type TabType = "products" | "gallery" | "testimonials"
 
 export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<TabType>("products")
@@ -65,6 +70,15 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   const [gallerySubmitting, setGallerySubmitting] = useState(false)
   const galleryFileInputRef = useRef<HTMLInputElement>(null)
 
+  // Testimonials state
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([])
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true)
+  const [testimonialFormOpen, setTestimonialFormOpen] = useState(false)
+  const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null)
+  const [testimonialName, setTestimonialName] = useState("")
+  const [testimonialText, setTestimonialText] = useState("")
+  const [testimonialSubmitting, setTestimonialSubmitting] = useState(false)
+
   // Feedback notifications
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
@@ -103,9 +117,24 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     }
   }
 
+  // Load testimonials
+  const loadTestimonials = async () => {
+    setTestimonialsLoading(true)
+    try {
+      const data = await fetchTestimonials()
+      setTestimonials(data)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load testimonials"
+      showNotification("error", msg)
+    } finally {
+      setTestimonialsLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadProducts()
     loadGallery()
+    loadTestimonials()
   }, [])
 
   // Product Form Handlers
@@ -285,6 +314,76 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     }
   }
 
+  // Testimonial Form Handlers
+  const openNewTestimonialForm = () => {
+    setEditingTestimonial(null)
+    setTestimonialName("")
+    setTestimonialText("")
+    setTestimonialFormOpen(true)
+  }
+
+  const openEditTestimonialForm = (item: TestimonialItem) => {
+    setEditingTestimonial(item)
+    setTestimonialName(item.name)
+    setTestimonialText(item.text)
+    setTestimonialFormOpen(true)
+  }
+
+  const handleTestimonialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmedName = testimonialName.trim()
+    const trimmedText = testimonialText.trim()
+
+    if (!trimmedName) {
+      showNotification("error", "Please enter the customer's name.")
+      return
+    }
+    if (!trimmedText) {
+      showNotification("error", "Please enter the customer's feedback.")
+      return
+    }
+
+    setTestimonialSubmitting(true)
+    try {
+      if (editingTestimonial) {
+        await updateTestimonial(editingTestimonial._id, {
+          name: trimmedName,
+          text: trimmedText,
+        })
+        showNotification("success", "Testimonial updated successfully.")
+      } else {
+        await createTestimonial({
+          name: trimmedName,
+          text: trimmedText,
+        })
+        showNotification("success", "Testimonial added successfully.")
+      }
+      setTestimonialFormOpen(false)
+      loadTestimonials()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save testimonial."
+      showNotification("error", msg)
+    } finally {
+      setTestimonialSubmitting(false)
+    }
+  }
+
+  const handleDeleteTestimonial = async (item: TestimonialItem) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the testimonial from "${item.name}"? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    try {
+      await deleteTestimonial(item._id)
+      showNotification("success", "Deleted testimonial.")
+      loadTestimonials()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete testimonial."
+      showNotification("error", msg)
+    }
+  }
+
   const handleLogoutClick = async () => {
     await logoutAdmin()
     onLogout()
@@ -372,6 +471,18 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
           >
             <span className="sm:hidden">Gallery</span>
             <span className="hidden sm:inline">Gallery Management</span> ({gallery.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("testimonials")}
+            type="button"
+            className={`flex-1 sm:flex-none min-h-11 pb-3 pt-2 px-2 sm:px-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 cursor-pointer ${
+              activeTab === "testimonials"
+                ? "border-[#007b5f] text-[#007b5f]"
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <span className="sm:hidden">Testimonials</span>
+            <span className="hidden sm:inline">Testimonial Management</span> ({testimonials.length})
           </button>
         </div>
 
@@ -766,6 +877,159 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                       </button>
                       <button
                         onClick={() => handleDeleteGallery(item)}
+                        type="button"
+                        className="min-h-11 sm:min-h-0 py-2.5 sm:py-1.5 px-4 sm:px-3 text-sm sm:text-xs font-semibold rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 3: TESTIMONIAL MANAGEMENT */}
+        {/* ========================================================= */}
+        {activeTab === "testimonials" && (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-[#007b5f]">Testimonials</h2>
+                <p className="text-xs text-gray-500">Manage customer feedback displayed on the website</p>
+              </div>
+              <button
+                onClick={openNewTestimonialForm}
+                type="button"
+                className="w-full sm:w-auto min-h-11 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#007b5f] text-white font-semibold text-sm shadow hover:bg-[#00634c] transition-colors cursor-pointer"
+              >
+                <span>+</span> Add New Testimonial
+              </button>
+            </div>
+
+            {/* Testimonial Modal Form */}
+            {testimonialFormOpen && (
+              <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs" role="dialog" aria-modal="true">
+                <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-6 border border-gray-200 max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto overscroll-contain">
+                  <div className="flex justify-between items-start gap-3 pb-4 border-b border-gray-100 mb-5">
+                    <h3 className="min-w-0 break-words text-lg sm:text-xl font-serif font-bold text-[#007b5f]">
+                      {editingTestimonial ? "Edit Testimonial" : "Add New Testimonial"}
+                    </h3>
+                    <button
+                      onClick={() => setTestimonialFormOpen(false)}
+                      type="button"
+                      aria-label="Close"
+                      className="shrink-0 -mr-2 -mt-2 w-11 h-11 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-2xl font-bold cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                        Customer Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={testimonialName}
+                        onChange={(e) => setTestimonialName(e.target.value)}
+                        placeholder="e.g. Sophia Jenkins"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f] text-sm"
+                        required
+                        maxLength={100}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                        Customer Feedback <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={testimonialText}
+                        onChange={(e) => setTestimonialText(e.target.value)}
+                        placeholder="e.g. The freshness and care are obvious in every product. It feels honest, thoughtful and deeply connected to nature."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f] text-sm leading-relaxed"
+                        required
+                        maxLength={2000}
+                      />
+                      <span className="text-[11px] text-gray-400 block text-right mt-1">
+                        {testimonialText.length}/2000 characters
+                      </span>
+                    </div>
+
+                    <div className="pt-4 flex gap-3 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setTestimonialFormOpen(false)}
+                        className="flex-1 min-h-11 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={testimonialSubmitting}
+                        className="flex-1 min-h-11 py-2.5 rounded-xl bg-[#007b5f] text-white font-semibold text-sm hover:bg-[#00634c] transition-colors shadow disabled:opacity-50 cursor-pointer"
+                      >
+                        {testimonialSubmitting ? "Saving..." : editingTestimonial ? "Save Changes" : "Save Testimonial"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Testimonials List */}
+            {testimonialsLoading ? (
+              <div className="p-12 text-center text-gray-400">Loading testimonials...</div>
+            ) : testimonials.length === 0 ? (
+              <div className="p-6 sm:p-12 bg-white rounded-2xl border border-dashed border-gray-300 text-center">
+                <p className="text-gray-500 font-medium">No testimonials found.</p>
+                <button
+                  onClick={openNewTestimonialForm}
+                  type="button"
+                  className="mt-3 min-h-11 px-4 py-2 rounded-xl bg-[#007b5f] text-white text-sm font-semibold shadow cursor-pointer"
+                >
+                  Add your first testimonial
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {testimonials.map((item) => (
+                  <div
+                    key={item._id}
+                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                  >
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-8 h-8 rounded-full bg-[#007b5f]/10 text-[#007b5f] font-bold flex items-center justify-center text-xs shrink-0">
+                          {item.name ? item.name.charAt(0).toUpperCase() : "U"}
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="font-serif font-bold text-gray-800 text-base truncate">{item.name}</h4>
+                          <p className="text-xs text-gray-400">
+                            Added: {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "Initial"}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 italic leading-relaxed flex-1 whitespace-pre-line">
+                        "{item.text}"
+                      </p>
+                    </div>
+
+                    <div className="px-4 pb-4 pt-2 flex gap-2 border-t border-gray-50">
+                      <button
+                        onClick={() => openEditTestimonialForm(item)}
+                        type="button"
+                        className="flex-1 min-h-11 sm:min-h-0 py-2.5 sm:py-1.5 px-3 text-sm sm:text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTestimonial(item)}
                         type="button"
                         className="min-h-11 sm:min-h-0 py-2.5 sm:py-1.5 px-4 sm:px-3 text-sm sm:text-xs font-semibold rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-colors cursor-pointer"
                       >
