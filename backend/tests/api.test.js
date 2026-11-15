@@ -280,6 +280,27 @@ describe("Coconut API Integration Tests (Native HTTP via Named Pipe)", () => {
     assert.match(body.message, /10 MB/i)
   })
 
+  it("POST /api/gallery should reject missing image with 400", async () => {
+    const multipart = createMultipart({
+      fields: { title: "Pongal Event", description: "Event description" },
+    })
+
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/gallery",
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        "Content-Type": multipart.contentType,
+      },
+      body: multipart.body,
+    })
+
+    assert.equal(res.status, 400)
+    const body = await res.json()
+    assert.equal(body.success, false)
+    assert.match(body.message, /Please choose an image to upload/i)
+  })
+
   it("POST /api/gallery should reject a gallery image exceeding 10 MB with 413", async () => {
     const oversizedBuffer = Buffer.alloc(10.5 * 1024 * 1024)
     oversizedBuffer.set([0xff, 0xd8, 0xff, 0xe0], 0)

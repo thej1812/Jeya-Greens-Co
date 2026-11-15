@@ -12,11 +12,11 @@ export function validateTextFields(body, rules, { partial = false } = {}) {
   const values = {}
   const errors = {}
 
-  for (const [field, { label, max }] of Object.entries(rules)) {
+  for (const [field, { label, max, optional = false }] of Object.entries(rules)) {
     const raw = body?.[field]
 
     if (raw === undefined || raw === null) {
-      if (!partial) errors[field] = `${label} is required.`
+      if (!partial && !optional) errors[field] = `${label} is required.`
       continue
     }
     if (typeof raw !== "string") {
@@ -25,10 +25,14 @@ export function validateTextFields(body, rules, { partial = false } = {}) {
     }
 
     const value = raw.trim().replace(/\s+/g, " ")
-    if (!value) errors[field] = `${label} cannot be empty.`
-    else if (value.length > max)
+    if (!value) {
+      if (!partial && !optional) errors[field] = `${label} cannot be empty.`
+      else if (optional) values[field] = ""
+    } else if (value.length > max) {
       errors[field] = `${label} must be ${max} characters or fewer.`
-    else values[field] = value
+    } else {
+      values[field] = value
+    }
   }
 
   if (Object.keys(errors).length > 0) {

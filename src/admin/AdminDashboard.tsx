@@ -62,17 +62,26 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   // Gallery state
   const [gallery, setGallery] = useState<GalleryItem[]>([])
   const [galleryLoading, setGalleryLoading] = useState(true)
+  const [galleryError, setGalleryError] = useState<string | null>(null)
   const [galleryFormOpen, setGalleryFormOpen] = useState(false)
   const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null)
+  const [galleryCategory, setGalleryCategory] = useState("EVENT")
+  const [galleryTitle, setGalleryTitle] = useState("")
+  const [galleryDescription, setGalleryDescription] = useState("")
+  const [galleryEventDate, setGalleryEventDate] = useState("")
   const [galleryCaption, setGalleryCaption] = useState("")
   const [galleryFile, setGalleryFile] = useState<File | null>(null)
   const [galleryPreview, setGalleryPreview] = useState<string | null>(null)
   const [gallerySubmitting, setGallerySubmitting] = useState(false)
   const galleryFileInputRef = useRef<HTMLInputElement>(null)
 
+  // Products error state
+  const [productsError, setProductsError] = useState<string | null>(null)
+
   // Testimonials state
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>([])
   const [testimonialsLoading, setTestimonialsLoading] = useState(true)
+  const [testimonialsError, setTestimonialsError] = useState<string | null>(null)
   const [testimonialFormOpen, setTestimonialFormOpen] = useState(false)
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null)
   const [testimonialName, setTestimonialName] = useState("")
@@ -92,11 +101,13 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   // Load products
   const loadProducts = async () => {
     setProductsLoading(true)
+    setProductsError(null)
     try {
       const data = await fetchProducts()
       setProducts(data)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load products"
+      setProductsError(msg)
       showNotification("error", msg)
     } finally {
       setProductsLoading(false)
@@ -106,11 +117,13 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   // Load gallery
   const loadGallery = async () => {
     setGalleryLoading(true)
+    setGalleryError(null)
     try {
       const data = await fetchGallery()
       setGallery(data)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load gallery"
+      setGalleryError(msg)
       showNotification("error", msg)
     } finally {
       setGalleryLoading(false)
@@ -120,11 +133,13 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   // Load testimonials
   const loadTestimonials = async () => {
     setTestimonialsLoading(true)
+    setTestimonialsError(null)
     try {
       const data = await fetchTestimonials()
       setTestimonials(data)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load testimonials"
+      setTestimonialsError(msg)
       showNotification("error", msg)
     } finally {
       setTestimonialsLoading(false)
@@ -234,7 +249,11 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   // Gallery Form Handlers
   const openNewGalleryForm = () => {
     setEditingGallery(null)
+    setGalleryCategory("EVENT")
+    setGalleryTitle("")
+    setGalleryDescription("")
     setGalleryCaption("")
+    setGalleryEventDate(new Date().toISOString().split("T")[0])
     setGalleryFile(null)
     setGalleryPreview(null)
     setGalleryFormOpen(true)
@@ -243,9 +262,19 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
 
   const openEditGalleryForm = (item: GalleryItem) => {
     setEditingGallery(item)
-    setGalleryCaption(item.caption)
+    setGalleryCategory(item.category || "EVENT")
+    setGalleryTitle(item.title || item.caption || "")
+    setGalleryDescription(item.description || item.caption || "")
+    setGalleryCaption(item.caption || item.title || "")
+    setGalleryEventDate(
+      item.eventDate
+        ? new Date(item.eventDate).toISOString().split("T")[0]
+        : item.createdAt
+          ? new Date(item.createdAt).toISOString().split("T")[0]
+          : "",
+    )
     setGalleryFile(null)
-    setGalleryPreview(item.image)
+    setGalleryPreview(item.image.startsWith("http") ? item.image : `/assets/${item.image}`)
     setGalleryFormOpen(true)
     if (galleryFileInputRef.current) galleryFileInputRef.current.value = ""
   }
@@ -264,8 +293,12 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
 
   const handleGallerySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!galleryCaption.trim()) {
-      showNotification("error", "Please provide a caption.")
+    if (!galleryTitle.trim()) {
+      showNotification("error", "Please provide a Title / Event Name.")
+      return
+    }
+    if (!galleryDescription.trim()) {
+      showNotification("error", "Please provide a Description.")
       return
     }
 
@@ -277,23 +310,29 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     setGallerySubmitting(true)
     try {
       const formData = new FormData()
-      formData.append("caption", galleryCaption.trim())
+      formData.append("category", galleryCategory.trim() || "EVENT")
+      formData.append("title", galleryTitle.trim())
+      formData.append("description", galleryDescription.trim())
+      formData.append("caption", galleryTitle.trim())
+      if (galleryEventDate) {
+        formData.append("eventDate", galleryEventDate)
+      }
       if (galleryFile) {
         formData.append("image", galleryFile)
       }
 
       if (editingGallery) {
         await updateGalleryItem(editingGallery._id, formData)
-        showNotification("success", "Gallery image updated successfully.")
+        showNotification("success", "Gallery item updated successfully.")
       } else {
         await createGalleryItem(formData)
-        showNotification("success", "Gallery image uploaded successfully.")
+        showNotification("success", "Gallery item uploaded successfully.")
       }
 
       setGalleryFormOpen(false)
       loadGallery()
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save gallery image."
+      const msg = err instanceof Error ? err.message : "Failed to save gallery item."
       showNotification("error", msg)
     } finally {
       setGallerySubmitting(false)
@@ -657,6 +696,20 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
               </div>
             )}
 
+            {/* Error Banner */}
+            {productsError && (
+              <div className="mb-6 p-4 sm:p-5 bg-red-50 rounded-2xl border border-red-200 text-center">
+                <p className="text-red-700 font-semibold mb-2">Error connecting to Products API: {productsError}</p>
+                <button
+                  onClick={loadProducts}
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold shadow hover:bg-red-700 cursor-pointer"
+                >
+                  Retry Connection
+                </button>
+              </div>
+            )}
+
             {/* Products List Grid */}
             {productsLoading ? (
               <div className="p-12 text-center text-gray-400">Loading products...</div>
@@ -745,13 +798,27 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
               </button>
             </div>
 
+            {/* Gallery Error Banner */}
+            {galleryError && (
+              <div className="mb-6 p-4 sm:p-5 bg-red-50 rounded-2xl border border-red-200 text-center">
+                <p className="text-red-700 font-semibold mb-2">Error connecting to Gallery API: {galleryError}</p>
+                <button
+                  onClick={loadGallery}
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold shadow hover:bg-red-700 cursor-pointer"
+                >
+                  Retry Connection
+                </button>
+              </div>
+            )}
+
             {/* Gallery Modal Form */}
             {galleryFormOpen && (
               <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs" role="dialog" aria-modal="true">
                 <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-6 border border-gray-200 max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto overscroll-contain">
                   <div className="flex justify-between items-start gap-3 pb-4 border-b border-gray-100 mb-5">
                     <h3 className="min-w-0 break-words text-lg sm:text-xl font-serif font-bold text-[#007b5f]">
-                      {editingGallery ? "Edit Gallery Item" : "Upload Gallery Image"}
+                      {editingGallery ? "Edit Gallery Item" : "Add New Gallery Item"}
                     </h3>
                     <button
                       onClick={() => setGalleryFormOpen(false)}
@@ -764,6 +831,65 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                   </div>
 
                   <form onSubmit={handleGallerySubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-cat">
+                          Category / Label *
+                        </label>
+                        <input
+                          id="gal-cat"
+                          type="text"
+                          required
+                          value={galleryCategory}
+                          onChange={(e) => setGalleryCategory(e.target.value)}
+                          placeholder="e.g. EVENT"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm font-semibold uppercase tracking-wider"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-date">
+                          Event Date
+                        </label>
+                        <input
+                          id="gal-date"
+                          type="date"
+                          value={galleryEventDate}
+                          onChange={(e) => setGalleryEventDate(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-title">
+                        Title / Event Name *
+                      </label>
+                      <input
+                        id="gal-title"
+                        type="text"
+                        required
+                        value={galleryTitle}
+                        onChange={(e) => setGalleryTitle(e.target.value)}
+                        placeholder="e.g. PONGAL EVENT"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm font-bold uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-desc">
+                        Description *
+                      </label>
+                      <textarea
+                        id="gal-desc"
+                        rows={4}
+                        required
+                        value={galleryDescription}
+                        onChange={(e) => setGalleryDescription(e.target.value)}
+                        placeholder="Detailed description of the event or community activity..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm leading-relaxed"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-img">
                         Gallery Image {editingGallery ? "(leave empty to keep current)" : "*"}
@@ -792,21 +918,6 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                         </div>
                       </div>
                     )}
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="gal-cap">
-                        Caption *
-                      </label>
-                      <textarea
-                        id="gal-cap"
-                        rows={3}
-                        required
-                        value={galleryCaption}
-                        onChange={(e) => setGalleryCaption(e.target.value)}
-                        placeholder="e.g. Freshly picked mature coconuts from our coastal groves."
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
-                      />
-                    </div>
 
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-100 mt-6">
                       <button
@@ -855,15 +966,28 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                       <div className="aspect-4/3 w-full bg-gray-100 overflow-hidden relative">
                         <img
                           src={item.image.startsWith("http") ? item.image : `/assets/${item.image}`}
-                          alt={item.caption}
+                          alt={item.title || item.caption}
                           className="w-full h-full object-cover"
                         />
+                        <span className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-xs text-[#007b5f]">
+                          {item.category || "EVENT"}
+                        </span>
                       </div>
                       <div className="p-4">
-                        <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">{item.caption}</p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Added: {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Initial"}
+                        <h4 className="font-bold text-gray-900 text-base mb-1 line-clamp-1">
+                          {item.title || item.caption}
+                        </h4>
+                        <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                          {item.description || item.caption}
                         </p>
+                        <div className="flex items-center justify-between text-xs text-gray-400 mt-3 pt-2 border-t border-gray-100">
+                          <span>
+                            {item.eventDate ? `Event: ${new Date(item.eventDate).toLocaleDateString()}` : "Event date not set"}
+                          </span>
+                          <span>
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -873,7 +997,7 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                         type="button"
                         className="flex-1 min-h-11 sm:min-h-0 py-2.5 sm:py-1.5 px-3 text-sm sm:text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors cursor-pointer"
                       >
-                        Edit Caption / Image
+                        Edit Item
                       </button>
                       <button
                         onClick={() => handleDeleteGallery(item)}
@@ -979,6 +1103,20 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                     </div>
                   </form>
                 </div>
+              </div>
+            )}
+
+            {/* Testimonials Error Banner */}
+            {testimonialsError && (
+              <div className="mb-6 p-4 sm:p-5 bg-red-50 rounded-2xl border border-red-200 text-center">
+                <p className="text-red-700 font-semibold mb-2">Error connecting to Testimonials API: {testimonialsError}</p>
+                <button
+                  onClick={loadTestimonials}
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold shadow hover:bg-red-700 cursor-pointer"
+                >
+                  Retry Connection
+                </button>
               </div>
             )}
 

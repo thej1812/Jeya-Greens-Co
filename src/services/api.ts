@@ -65,7 +65,11 @@ export interface CategoryItem {
 
 export interface GalleryItem {
   _id: string
-  caption: string
+  category?: string
+  title?: string
+  description?: string
+  eventDate?: string
+  caption?: string
   image: string
   imagePublicId?: string
   createdAt?: string

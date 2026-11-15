@@ -43,23 +43,30 @@ const defaultProducts: ProductItem[] = [
 const defaultGallery: GalleryItem[] = [
   {
     _id: "init-g1",
+    category: "EVENT",
+    title: "PONGAL EVENT",
+    description:
+      "Growth and earning profit alone is not the objective of the company but also to part with a portion of its earning / profit for the welfare of the society which is responsible for the company's growth, particularly the economically poor, women and physically and mentally challenged. These activities are implemented through Sakthidevi Charitable Trust a social arm of Sakthi Masala Group of Companies.",
+    caption: "PONGAL EVENT",
     image: "f4680.png",
-    caption: "Shop only the orders you want.",
   },
   {
     _id: "init-g2",
+    category: "HARVEST",
+    title: "COCONUT SELECTION",
+    description:
+      "Every coconut is selectively handpicked from trusted local orchards, ensuring rich natural sweetness and peak nutritional goodness from farm to family.",
+    caption: "Shop only the orders you want.",
     image: "40a51.png",
-    caption: "Go to the store to pick items for the order.",
   },
   {
     _id: "init-g3",
-    image: "df085.png",
+    category: "COMMUNITY",
+    title: "COMMUNITY GOODNESS",
+    description:
+      "From sustainable plant care to healthy refreshments, our mission is cultivating conscious living and sharing nature's bounty with our community.",
     caption: "Chat with customers for questions or changes.",
-  },
-  {
-    _id: "init-g4",
-    image: "f4680.png",
-    caption: "Shop only the orders you want.",
+    image: "df085.png",
   },
 ]
 
@@ -711,7 +718,15 @@ generations to come.
 
           <div className="gallery-panel" data-reveal>
             <div className="gallery-panel-text">
-              <p>{currentGalleryItem?.caption || GALLERY_PANEL_TEXT}</p>
+              {currentGalleryItem?.category && (
+                <span className="gallery-card-category">{currentGalleryItem.category}</span>
+              )}
+              {currentGalleryItem?.title && (
+                <h3 className="gallery-card-title">{currentGalleryItem.title}</h3>
+              )}
+              <p className="gallery-card-desc">
+                {currentGalleryItem?.description || currentGalleryItem?.caption || GALLERY_PANEL_TEXT}
+              </p>
             </div>
 
             <div className="gallery-panel-media">
@@ -724,7 +739,7 @@ generations to come.
                         ? currentGalleryItem.image
                         : `${A}/${currentGalleryItem.image}`
                     }
-                    alt={currentGalleryItem.caption || "Jeya Greens gallery"}
+                    alt={currentGalleryItem.title || currentGalleryItem.caption || "Jeya Greens gallery"}
                   />
                 )}
                 <div className="gallery-arrows">
