@@ -2,6 +2,7 @@ import { assertEnv, config } from "./config/env.js"
 import { connectDB, disconnectDB } from "./config/db.js"
 import { ensureAdminInitialized } from "./controllers/authController.js"
 import { seedInitialTestimonials } from "./controllers/testimonialController.js"
+import { seedInitialCategories, seedInitialProducts, seedInitialGallery } from "./scripts/seed.js"
 import { createApp } from "./app.js"
 import { verifyMailer, closeTransporter } from "./config/mailer.js"
 
@@ -9,7 +10,10 @@ async function start() {
   assertEnv()
   await connectDB()
   await ensureAdminInitialized()
-  await seedInitialTestimonials()
+  await seedInitialCategories().catch((e) => console.warn("[Startup Seed Categories]", e.message))
+  await seedInitialProducts().catch((e) => console.warn("[Startup Seed Products]", e.message))
+  await seedInitialGallery().catch((e) => console.warn("[Startup Seed Gallery]", e.message))
+  await seedInitialTestimonials().catch((e) => console.warn("[Startup Seed Testimonials]", e.message))
 
   const app = createApp()
   const server = app.listen(config.port, () => {
