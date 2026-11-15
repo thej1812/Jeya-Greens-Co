@@ -410,9 +410,15 @@ export async function deleteTestimonial(id: string): Promise<void> {
 // ==========================================
 
 export interface ContactEnquiry {
-  name: string
+  name?: string
+  firstName?: string
+  lastName?: string
   email: string
-  enquiry: string
+  phone?: string
+  company?: string
+  companyName?: string
+  subject?: string
+  enquiry?: string
   message: string
 }
 

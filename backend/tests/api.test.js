@@ -402,6 +402,49 @@ describe("Coconut API Integration Tests (Native HTTP via Named Pipe)", () => {
     assert.match(body.message, /in touch soon/i)
   })
 
+  it("POST /api/contact should accept new Contact Page fields (firstName, lastName, phone, company, subject, message)", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/contact",
+      body: {
+        firstName: "Priya",
+        lastName: "Sharma",
+        email: "priya.sharma@example.com",
+        phone: "+91 98765 43210",
+        company: "Green Living Organics",
+        subject: "Partnership & Bulk Supply",
+        message: "We are interested in stocking Jeya Greens organic coconut oil and snacks in our retail stores.",
+      },
+    })
+    assert.equal(res.status, 200)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.match(body.message, /in touch soon/i)
+  })
+
+  it("POST /api/contact should validate field-specific errors for Contact Page fields", async () => {
+    const res = await apiRequest({
+      method: "POST",
+      path: "/api/contact",
+      body: {
+        firstName: "",
+        lastName: "Sharma",
+        email: "not-an-email",
+        phone: "badphone",
+        subject: "",
+        message: "",
+      },
+    })
+    assert.equal(res.status, 400)
+    const body = await res.json()
+    assert.equal(body.success, false)
+    assert.ok(body.errors?.firstName)
+    assert.ok(body.errors?.email)
+    assert.ok(body.errors?.phone)
+    assert.ok(body.errors?.subject)
+    assert.ok(body.errors?.message)
+  })
+
   // ==========================================
   // Category API Tests
   // ==========================================

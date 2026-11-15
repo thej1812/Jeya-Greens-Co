@@ -126,24 +126,25 @@ export default function Contact() {
 
     setSubmitting(true)
     try {
-      // Maps this form onto the existing API shape (name / email / enquiry / message)
-      const extra = [
-        values.phone.trim() && `Phone: ${values.phone.trim()}`,
-        values.company.trim() && `Company: ${values.company.trim()}`,
-      ].filter(Boolean)
-
       const confirmation = await sendContactEnquiry({
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
         name: `${values.firstName} ${values.lastName}`.trim(),
         email: values.email.trim(),
+        phone: values.phone.trim(),
+        company: values.company.trim(),
+        subject: values.subject.trim(),
         enquiry: values.subject.trim(),
-        message: [values.message.trim(), ...extra].join("\n\n"),
+        message: values.message.trim(),
       })
       setSuccess(confirmation)
       setValues(EMPTY)
     } catch (err) {
       if (err instanceof ContactError) {
         setError(err.message)
-        if (err.fieldErrors) setErrors(err.fieldErrors)
+        if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+          setErrors(err.fieldErrors)
+        }
       } else {
         setError(
           err instanceof Error

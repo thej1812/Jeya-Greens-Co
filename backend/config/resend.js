@@ -56,7 +56,15 @@ export function closeTransporter() {
  * Never uses SMTP ports (works seamlessly on Render Free web services).
  * Sets Reply-To to the customer's email.
  */
-export async function sendContactEmail({ name, email, enquiry, message }) {
+export async function sendContactEmail({
+  name,
+  email,
+  phone = "",
+  company = "",
+  subject = "",
+  enquiry = "",
+  message,
+}) {
   // Test environment mock
   if (
     process.env.NODE_ENV === "test" ||
@@ -98,19 +106,65 @@ export async function sendContactEmail({ name, email, enquiry, message }) {
     sender = `Jeya Greens & Co. <${sender}>`
   }
 
-  const textContent = [
+  const emailSubject = subject || enquiry || "General Enquiry"
+
+  const textLines = [
     "New Customer Enquiry via Jeya Greens Website",
     "---------------------------------------------",
-    `Customer Name: ${name}`,
+    `Customer Name:  ${name}`,
     `Customer Email: ${email}`,
-    `Enquiry Type:  ${enquiry}`,
-    `Received:      ${timestamp} IST`,
+  ]
+
+  if (phone) textLines.push(`Phone Number:   ${phone}`)
+  if (company) textLines.push(`Company Name:   ${company}`)
+
+  textLines.push(
+    `Subject:        ${emailSubject}`,
+    `Received:       ${timestamp} IST`,
     "",
     "Message:",
     message,
     "",
+    "---------------------------------------------",
     "Reply directly to this email to respond to the customer.",
-  ].join("\n")
+  )
+
+  const textContent = textLines.join("\n")
+
+  const tableRows = [
+    `<tr>
+      <td style="padding: 8px 0; color: #718096; width: 130px; font-weight: bold;">Customer Name:</td>
+      <td style="padding: 8px 0; color: #1a202c; font-weight: 600;">${escapeHtml(name)}</td>
+    </tr>`,
+    `<tr>
+      <td style="padding: 8px 0; color: #718096; font-weight: bold;">Customer Email:</td>
+      <td style="padding: 8px 0; color: #007b5f; font-weight: 600;">
+        <a href="mailto:${escapeHtml(email)}" style="color: #007b5f; text-decoration: none;">${escapeHtml(email)}</a>
+      </td>
+    </tr>`,
+    phone
+      ? `<tr>
+          <td style="padding: 8px 0; color: #718096; font-weight: bold;">Phone Number:</td>
+          <td style="padding: 8px 0; color: #1a202c;">${escapeHtml(phone)}</td>
+        </tr>`
+      : "",
+    company
+      ? `<tr>
+          <td style="padding: 8px 0; color: #718096; font-weight: bold;">Company Name:</td>
+          <td style="padding: 8px 0; color: #1a202c;">${escapeHtml(company)}</td>
+        </tr>`
+      : "",
+    `<tr>
+      <td style="padding: 8px 0; color: #718096; font-weight: bold;">Subject / Topic:</td>
+      <td style="padding: 8px 0; color: #1a202c;">${escapeHtml(emailSubject)}</td>
+    </tr>`,
+    `<tr>
+      <td style="padding: 8px 0; color: #718096; font-weight: bold;">Date &amp; Time:</td>
+      <td style="padding: 8px 0; color: #4a5568;">${timestamp} IST</td>
+    </tr>`,
+  ]
+    .filter(Boolean)
+    .join("\n")
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #fdffe2;">
@@ -121,24 +175,7 @@ export async function sendContactEmail({ name, email, enquiry, message }) {
 
       <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-          <tr>
-            <td style="padding: 8px 0; color: #718096; width: 130px; font-weight: bold;">Customer Name:</td>
-            <td style="padding: 8px 0; color: #1a202c; font-weight: 600;">${escapeHtml(name)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #718096; font-weight: bold;">Customer Email:</td>
-            <td style="padding: 8px 0; color: #007b5f; font-weight: 600;">
-              <a href="mailto:${escapeHtml(email)}" style="color: #007b5f; text-decoration: none;">${escapeHtml(email)}</a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #718096; font-weight: bold;">Enquiry:</td>
-            <td style="padding: 8px 0; color: #1a202c;">${escapeHtml(enquiry)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #718096; font-weight: bold;">Date &amp; Time:</td>
-            <td style="padding: 8px 0; color: #4a5568;">${timestamp} IST</td>
-          </tr>
+          ${tableRows}
         </table>
 
         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #edf2f7;">
@@ -160,7 +197,7 @@ export async function sendContactEmail({ name, email, enquiry, message }) {
       to: [receiver],
       replyTo: `"${name}" <${email}>`,
       reply_to: `"${name}" <${email}>`,
-      subject: `New Customer Enquiry: ${enquiry} - ${name}`,
+      subject: `New Customer Enquiry: ${emailSubject} - ${name}`,
       text: textContent,
       html: htmlContent,
     })
