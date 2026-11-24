@@ -251,14 +251,14 @@ export default function Footer() {
           </div>
           <div>
             <strong>Links</strong>
-            <a href="#contact">Location</a>
-            <a href="#contact">Whatsapp</a>
-            <a href="#contact">Instagram</a>
+            <a href="https://maps.app.goo.gl/3CLdwzrzMuEK3AmE6?g_st=ic">Location</a>
+            <a href="https://wa.me/message/42C3YMALFQRKF1">Whatsapp</a>
+            <a href="https://www.instagram.com/jeyagreens/">Instagram</a>
           </div>
         </div>
         <img
           className="footer-bottles"
-          src={`${A}/9ea99.png`}
+          src={`${A}/footer.png`}
           alt="Two bottles of golden coconut oil"
         />
       </div>

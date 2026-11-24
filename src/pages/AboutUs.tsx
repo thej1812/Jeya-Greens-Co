@@ -55,7 +55,7 @@ export default function AboutUs() {
             <p className="founder-name">
               Ashwin
               <br />
-              Sivakurnanthan
+              sivagurunathan
             </p>
           </div>
         </section>

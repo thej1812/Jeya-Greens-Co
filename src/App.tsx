@@ -459,12 +459,13 @@ Goodness</span>
                 </span>
               </h1>
               <p>
-                Green, modern,
+                Premium Coconut Products,  
+
                 <br />
-                life-enhancing plants
+                Natural Benefits
               </p>
               <Link className="button button--green" to="/our-product">
-  Shop Now
+  Explore Products
 </Link>
             </div>
           </div>
@@ -503,9 +504,8 @@ into VCO and healthy coconut beverages, and wholesome snacks.
         <section id="products" className="products section-pad">
           <div className="section-head" data-reveal>
             <h2>
-              Plants That
-              <br />
-              Make You Smile
+              Our Products
+              
             </h2>
 
             <div className="split-wrap" ref={categoryWrapRef}>
@@ -622,7 +622,7 @@ into VCO and healthy coconut beverages, and wholesome snacks.
             {[0, 1].map((group) => (
               <div className="ticker-group" key={group}>
                 {[
-                  "Plant Care",
+                  "Organic Resources",
                   "Coconut Goodness",
                   "Made With Care",
                   "Traditional Taste",
@@ -672,9 +672,9 @@ generations to come.
               alt="Founder of Jeya Greens as a young man"
             />
             <p className="founder-name">
-              Ashwin
+              Ashwin 
               <br />
-              Sivakurnanthan
+              sivagurunathan
             </p>
           </div>
         </section>

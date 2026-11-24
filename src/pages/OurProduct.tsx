@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Menu from "../components/Menu"
-import Footer from "../components/Footer"
+
 import { fetchProducts, ProductItem } from "../services/api"
 
 const A = "/assets"
@@ -267,8 +267,6 @@ export default function OurProduct() {
         </section>
       </main>
 
-      {/* ---------- FOOTER ---------- */}
-      <Footer />
 
     </div>
   )

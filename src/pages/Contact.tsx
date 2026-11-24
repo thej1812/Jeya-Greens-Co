@@ -4,12 +4,12 @@ import { sendContactEnquiry, ContactError } from "../services/api"
 
 /* ---- Edit your real business details here ---- */
 const CONTACT = {
-  phone: "Add business phone number",
-  email: "Add business email address",
-  address: "Add business address",
-  hours: "Add business hours",
-  whatsapp: "https://wa.me/", // + your number
-  instagram: "https://instagram.com/", // + your handle
+  phone: "+91 9751611823",
+  email: "jeyagreensandco@gmail.com",
+  address: "112/1A Vadanathampatti road,Ariyanayagipuram,Tenkasi 627862.",
+  hours: "Mon–Sat: 8:30 AM – 6:30 PM",
+  whatsapp: "https://wa.me/message/42C3YMALFQRKF1", // + your number
+  instagram: "https://www.instagram.com/jeyagreens/", // + your handle
 }
 
 type IconName =

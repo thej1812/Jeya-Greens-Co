@@ -1,13 +1,13 @@
 
 import { useState } from "react"
 import Menu from "../components/Menu"
-import Footer from "../components/Footer"
+
 
 // FAQ DATA
 const faqs = [
   [
-    "Where do you source your coconuts?",
-    "We work with trusted local growers and select mature coconuts for their flavour, purity and natural richness.",
+    "Do you only take bulk orders, or can I place a small individual order?",
+    "Yes. Contact us with your quantity and timeline. Yes, definitely! Whether it’s a single gift pack or a large bulk order, we’d love to help. As a growing business, we deeply value every single customer no order is too small for us. Just share the quantity and date you need it by, and we’ll take care of the rest with personal attention!",
   ],
   [
     "Are your products made in small batches?",
@@ -90,7 +90,7 @@ export default function FAQ() {
       </main>
 
       {/* FOOTER */}
-      <Footer />
+      
 
     </div>
   )

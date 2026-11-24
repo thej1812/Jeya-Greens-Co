@@ -382,9 +382,8 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   --cx: max(var(--caps), calc(100vw - var(--pad) - .62 * var(--bw)));
   position: absolute; z-index: -1;
   top: calc(clamp(80px, 10vw, 140px) - .19 * var(--bw));
-  left: calc(var(--cx) - .06 * var(--bw));
-  width: var(--bw); max-width: none; height: auto;
-  transform: rotate(-90deg); transform-origin: center; pointer-events: none;
+left: calc(var(--cx) - 14% - .02 * var(--bw));  width: var(--bw); max-width: none; height: auto;
+  transform: rotate(360deg); transform-origin: center; pointer-events: none;
 }
 /* Narrower desktops: not enough room beside the links, so sit the bottles below them in the right column */
 @media (min-width: 901px) and (max-width: 1399px) {
@@ -440,7 +439,7 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   /* Odd item left alone in the 2-column tablet grid: centre it instead of leaving it stranded on the left */
     .footer-top { --bw: clamp(300px, 78vw, 620px); grid-template-columns: 1fr; gap: 36px; padding-bottom: calc(.515 * var(--bw) + 40px); }
   .footer-links { padding-top: 30px; }
-  .footer-bottles { --pad: clamp(20px, 5vw, 40px); --bw: clamp(300px, 78vw, 620px); top: auto; bottom: calc(16px - .206 * var(--bw)); left: calc(100vw - var(--pad) - .71 * var(--bw)); }
+  .footer-bottles { --pad: clamp(20px, 5vw, 40px); --bw: clamp(300px, 78vw, 620px); top: auto; bottom: calc(16px - .106 * var(--bw)); left: calc(100vw - var(--pad) - 1.00 * var(--bw)); }
   .footer-bottom { align-items: flex-start; flex-direction: column; }
 }
 
@@ -561,19 +560,19 @@ h2 { font-family: var(--serif); font-size: clamp(52px, 8.5vw, 160px); font-weigh
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto clamp(24px, 3vw, 42px);
+  margin: 4px auto clamp(24px, 3vw, 42px);
   position: relative;
 }
 .gallery-date-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 22px;
+  gap: 12px;
+  padding: 18px 32px;
   border-radius: 9999px;
   border: 1.5px solid var(--green);
   background: transparent;
   color: var(--green);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;

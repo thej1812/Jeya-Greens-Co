@@ -7,7 +7,7 @@ export default function BrandLogo({ light = false }: { light?: boolean }) {
       href="/"
       aria-label="Jeya Greens home"
     >
-      <img src={`${A}/43927.png`} alt="Jeya Greens & Co." />
+      <img src={`${A}/logo.png`} alt="Jeya Greens & Co." />
     </a>
   )
 }
