@@ -19,6 +19,7 @@ import {
   GalleryItem,
   TestimonialItem,
 } from "./services/api"
+import Faq from "./pages/Faq"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -459,10 +460,10 @@ Goodness</span>
                 </span>
               </h1>
               <p>
-                Premium Coconut Products,  
+                Unrefined 
 
                 <br />
-                Natural Benefits
+               Coconut Essence
               </p>
               <Link className="button button--green" to="/our-product">
   Explore Products
@@ -668,7 +669,7 @@ generations to come.
           <div className="founder" data-reveal>
             <p className="founder-label">Founder</p>
             <img
-              src={`${A}/72a88.png`}
+              src={`${A}/founder.jpeg`}
               alt="Founder of Jeya Greens as a young man"
             />
             <p className="founder-name">
@@ -678,37 +679,66 @@ generations to come.
             </p>
           </div>
         </section>
+<section id="process" className="process section-pad">
+  <h2 data-reveal>Our Process</h2>
 
-        <section id="process" className="process section-pad">
-          <h2 data-reveal>Our Process</h2>
-          <p className="eyebrow" data-reveal>
-            A place you eat healthy
-          </p>
-          <p className="process-lead" data-reveal>
-            Simple ingredients, careful hands and time-honoured methods come
-            together in every Jeya Greens product.
-          </p>
-          <div className="process-map" data-reveal>
-            <img className="process-orbit" src={`${A}/13780.svg`} alt="" />
-            <img
-              className="process-image"
-              src={`${A}/6845e.png`}
-              alt="Coconuts, sweets and Jeya Greens products"
-            />
-            {[
-              "Pure Sourcing",
-              "Touchless Craft",
-              "Quality Extract",
-              "Chemical-Free Foods",
-              "Sealed Delivery",
-            ].map((step, i) => (
-              <span className={`process-step step-${i + 1}`} key={step}>
-                {step}
-              </span>
-            ))}
-          </div>
-        </section>
+  <p className="eyebrow" data-reveal>
+    Where Goodness Begins Naturally.
+  </p>
 
+  <p className="process-lead" data-reveal>
+    Simple ingredients, careful hands and time-honoured methods come
+    together in every Jeya Greens product.
+  </p>
+
+  <div className="process-map" data-reveal>
+    <img
+      className="process-orbit"
+      src={`${A}/13780.svg`}
+      alt=""
+    />
+
+    <img
+      className="process-image"
+      src={`${A}/Coconut Industry.png`}
+      alt="Coconuts, sweets and Jeya Greens products"
+    />
+
+    {[
+      <>
+        <strong>Pure Sourcing</strong>
+        <br />
+        Harvesting fresh, premium coconuts.
+      </>,
+     
+      <>
+        <strong>Sealed Delivery</strong>
+        <br />
+        Quality-tested, packed fresh, and delivered to your hands.
+      </>,
+      <>
+        <strong>Quality Extract</strong>
+        <br />
+        Pure oil extraction with strict lab checks.
+      </>,
+      <>
+        <strong>Chemical-Free Foods</strong>
+        <br />
+        Sweets & chips made naturally without preservatives.
+      </>,
+       <>
+        <strong>Touchless Craft</strong>
+        <br />
+        100% hands-free, hygienic processing.
+      </>,
+      
+    ].map((step, i) => (
+      <span className={`process-step step-${i + 1}`} key={i}>
+        {step}
+      </span>
+    ))}
+  </div>
+</section>
         <section id="gallery" className="gallery section-pad">
           <h2 data-reveal>Our Gallery</h2>
           <p className="gallery-desc" data-reveal>
@@ -784,30 +814,9 @@ generations to come.
           </Link>
         </section>
 
-        <section className="faq section-pad">
-          <h2 data-reveal>FAQ</h2>
-          <div className="faq-list" data-reveal>
-            {faqs.map(([question, answer], index) => (
-              <article
-                className={`faq-item ${openFaq === index ? "is-open" : ""}`}
-                key={question}
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
-                  aria-expanded={openFaq === index}
-                >
-                  <span>{question}</span>
-                  <span className="faq-plus">
-                    {openFaq === index ? "−" : "+"}
-                  </span>
-                </button>
-                <div className="faq-answer">
-                  <p>{answer}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <section id="faq" >
+           <Faq />
+         </section>
       </main>
 
       <Footer />
