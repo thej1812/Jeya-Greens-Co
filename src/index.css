@@ -772,6 +772,56 @@ left: calc(var(--cx) - 14% - .02 * var(--bw));  width: var(--bw); max-width: non
   min-width: 260px;
   text-align: left;
 }
+
+/* Gallery dropdown menu date filter styling */
+.gallery-menu-date-section {
+  border-top: 1px solid rgba(253, 255, 226, 0.2);
+  margin-top: 6px;
+  padding-top: 10px;
+  padding-inline: 4px;
+}
+
+.gallery-menu-date-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(253, 255, 226, 0.85);
+  margin-bottom: 8px;
+}
+
+.gallery-menu-date-clear {
+  background: transparent;
+  border: 0;
+  color: #f29100;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.gallery-menu-date-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(253, 255, 226, 0.12);
+  border: 1px solid rgba(253, 255, 226, 0.3);
+  border-radius: 8px;
+  color: var(--cream);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  color-scheme: dark;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.gallery-menu-date-input:focus {
+  border-color: var(--cream);
+  background: rgba(253, 255, 226, 0.2);
+}
 .gallery-panel-media {
   display: flex;
   justify-content: flex-end;

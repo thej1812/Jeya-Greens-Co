@@ -44,22 +44,27 @@ export const defaultGallery: GalleryItem[] = [
 const GALLERY_PANEL_TEXT =
   "Explore fresh market moments, genuine conversations and a process that brings goodness closer to you. Every picture in our gallery tells the story of honest coconut goodness, from the farm to your family's table."
 
+function ArrowIcon() {
+  return <img className="arrow-icon" src={`${A}/affe9.svg`} alt="" />
+}
+
 export default function OurGallery() {
   const [gallery, setGallery] = useState<GalleryItem[]>(defaultGallery)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>("")
-  const [datePickerOpen, setDatePickerOpen] = useState(false)
-  const dateFilterRef = useRef<HTMLDivElement>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterWrapRef = useRef<HTMLDivElement>(null)
 
   // Start at the top of the page
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  // Close date picker when clicking outside
+  // Close filter dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (dateFilterRef.current && !dateFilterRef.current.contains(e.target as Node)) {
-        setDatePickerOpen(false)
+      if (filterWrapRef.current && !filterWrapRef.current.contains(e.target as Node)) {
+        setFilterOpen(false)
       }
     }
     document.addEventListener("mousedown", handleOutsideClick)
@@ -90,21 +95,54 @@ export default function OurGallery() {
     }
   }, [])
 
-  // Filter gallery items by eventDate or createdAt
-  const filteredGallery = useMemo(() => {
-    if (!selectedDate) return gallery
-
-    return gallery.filter((item) => {
-      const rawDate = item.eventDate || item.createdAt
-      if (!rawDate) return false
-      try {
-        const dateStr = new Date(rawDate).toISOString().split("T")[0]
-        return dateStr === selectedDate
-      } catch {
-        return false
+  // Derive unique categories from gallery items
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>()
+    gallery.forEach((item) => {
+      const cat = item.category?.trim()
+      if (cat) {
+        set.add(cat.replace(/\s+/g, " "))
       }
     })
-  }, [gallery, selectedDate])
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [gallery])
+
+  // Filter gallery items by category and/or date
+  const filteredGallery = useMemo(() => {
+    return gallery.filter((item) => {
+      if (selectedCategory) {
+        const itemCat = (item.category || "").trim().toLowerCase()
+        if (itemCat !== selectedCategory.trim().toLowerCase()) {
+          return false
+        }
+      }
+      if (selectedDate) {
+        const rawDate = item.eventDate || item.createdAt
+        if (!rawDate) return false
+        try {
+          const dateStr = new Date(rawDate).toISOString().split("T")[0]
+          if (dateStr !== selectedDate) return false
+        } catch {
+          return false
+        }
+      }
+      return true
+    })
+  }, [gallery, selectedCategory, selectedDate])
+
+  // Button label matching category section convention
+  const buttonLabel = useMemo(() => {
+    if (selectedCategory && selectedDate) {
+      return `${selectedCategory} (${selectedDate})`
+    }
+    if (selectedCategory) {
+      return selectedCategory
+    }
+    if (selectedDate) {
+      return `Date: ${selectedDate}`
+    }
+    return "Categories"
+  }, [selectedCategory, selectedDate])
 
   return (
     <div id="top" className="site-shell">
@@ -116,57 +154,98 @@ export default function OurGallery() {
         <section id="gallery" className="gallery section-pad" style={{ marginTop: "52px" }}>
           <h2>Our Gallery</h2>
 
-          {/* Date Search / Filter Button matching reference screenshot */}
-          <div className="gallery-date-filter-wrap" ref={dateFilterRef}>
-            <button
-              type="button"
-              className={`gallery-date-btn ${datePickerOpen ? "is-active" : ""}`}
-              onClick={() => setDatePickerOpen(!datePickerOpen)}
-              aria-expanded={datePickerOpen}
-              aria-label="Filter events by date"
-            >
-              <span>{selectedDate ? `Date: ${selectedDate}` : "Search date"}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
+          {/* Split Filter Button matching Our Products Category button */}
+          <div className="split-wrap" ref={filterWrapRef} style={{ margin: "4px auto clamp(24px, 3vw, 42px)" }}>
+            <div className={`split-button ${filterOpen ? "is-open" : ""}`}>
+              <button
+                className="split-main"
+                type="button"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                {buttonLabel}
+              </button>
 
-            {datePickerOpen && (
-              <div className="gallery-date-popover">
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2" htmlFor="event-date-input">
-                  Filter by Event Date:
-                </label>
-                <input
-                  id="event-date-input"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value)
-                    setDatePickerOpen(false)
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#007b5f]"
-                />
-                <div className="mt-3 flex justify-between items-center pt-2 border-t border-gray-100">
+              <button
+                className="split-toggle"
+                type="button"
+                onClick={() => setFilterOpen(!filterOpen)}
+                aria-expanded={filterOpen}
+                aria-label="Open categories and date filter"
+              >
+                <ArrowIcon />
+              </button>
+
+              {filterOpen && (
+                <div className="category-menu" role="menu">
                   <button
                     type="button"
+                    className={`category-menu-btn ${
+                      selectedCategory === null && !selectedDate ? "is-active" : ""
+                    }`}
                     onClick={() => {
+                      setSelectedCategory(null)
                       setSelectedDate("")
-                      setDatePickerOpen(false)
+                      setFilterOpen(false)
                     }}
-                    className="text-xs font-semibold text-[#007b5f] hover:underline cursor-pointer"
                   >
-                    Clear Filter
+                    <span>All Events</span>
+                    <span className="cat-count">({gallery.length})</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDatePickerOpen(false)}
-                    className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
-                  >
-                    Close
-                  </button>
+
+                  {availableCategories.map((cat) => {
+                    const count = gallery.filter(
+                      (g) => (g.category || "").trim().toLowerCase() === cat.toLowerCase()
+                    ).length
+
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`category-menu-btn ${
+                          selectedCategory?.trim().toLowerCase() === cat.toLowerCase()
+                            ? "is-active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedCategory(cat)
+                          setFilterOpen(false)
+                        }}
+                      >
+                        <span>{cat}</span>
+                        <span className="cat-count">({count})</span>
+                      </button>
+                    )
+                  })}
+
+                  <div className="gallery-menu-date-section">
+                    <div className="gallery-menu-date-label">
+                      <span>Search by Date</span>
+                      {selectedDate && (
+                        <button
+                          type="button"
+                          className="gallery-menu-date-clear"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedDate("")
+                          }}
+                        >
+                          Clear Date
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value)
+                        setFilterOpen(false)
+                      }}
+                      className="gallery-menu-date-input"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <p className="gallery-desc">
@@ -185,12 +264,15 @@ export default function OurGallery() {
               }}
             >
               <p style={{ color: "var(--ink)", fontSize: "18px", fontWeight: 600, marginBottom: "14px" }}>
-                No events found for {selectedDate}.
+                No events found matching your filter.
               </p>
               <button
                 className="button button--green"
                 type="button"
-                onClick={() => setSelectedDate("")}
+                onClick={() => {
+                  setSelectedCategory(null)
+                  setSelectedDate("")
+                }}
               >
                 View All Events
               </button>
