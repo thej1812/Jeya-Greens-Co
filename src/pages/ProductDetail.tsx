@@ -6,48 +6,12 @@ import { fetchProducts, fetchProductById, ProductItem } from "../services/api"
 
 const A = "/assets"
 
-// Initial products fallback
-const defaultProducts: ProductItem[] = [
-  {
-    _id: "init-1",
-    name: "Coconut Burfi",
-    type: "Sweet",
-    category: "Sweet",
-    image: "fe393.png",
-    description:
-      "Traditional south Indian delicacy made with freshly grated coconut, aromatic cardamom, and pure cane sugar. Soft, melt-in-the-mouth texture offering authentic festive sweetness.",
-    nutrientsValue: "Sweetness 45%, Energy 140kcal",
-  },
-  {
-    _id: "init-2",
-    name: "Coconut Laddu",
-    type: "Sweet",
-    category: "Sweet",
-    image: "736d2.png",
-    description:
-      "Handcrafted golden coconut laddus prepared with roasted coconut flakes and organic condensed milk. A wholesome, energy-boosting treat perfect for any occasion.",
-    nutrientsValue: "Sweetness 50%, Spicy 60%",
-  },
-  {
-    _id: "init-3",
-    name: "Coconut Oil",
-    type: "Plant Care",
-    category: "Plant Care",
-    image: "e7e2a.png",
-    description:
-      "Cold-pressed extra virgin coconut oil extracted from fresh coconut milk without heat or chemical refining. Highly nourishing for plant vitality, organic soil health, and eco-friendly conditioning.",
-    nutrientsValue: "100% Pure, Zero Chemicals",
-  },
-  {
-    _id: "init-4",
-    name: "Coconut Water",
-    type: "Plant Care",
-    category: "Plant Care",
-    image: "d452e.png",
-    description:
-      "Pure, electrolyte-rich tender coconut water tapped straight from fresh green coconuts. Natural plant growth stimulant packed with natural cytokinins, potassium, and active bio-nutrients.",
-    nutrientsValue: "Hydration 95%, Minerals 80%",
-  },
+// Baseline fallback products (no dummy descriptions or nutrients - only real admin data is shown)
+const fallbackProducts: ProductItem[] = [
+  { _id: "init-1", name: "Coconut Burfi", type: "Sweet", category: "Sweet", image: "fe393.png" },
+  { _id: "init-2", name: "Coconut Laddu", type: "Sweet", category: "Sweet", image: "736d2.png" },
+  { _id: "init-3", name: "Coconut Oil", type: "Plant Care", category: "Plant Care", image: "e7e2a.png" },
+  { _id: "init-4", name: "Coconut Water", type: "Plant Care", category: "Plant Care", image: "d452e.png" },
 ]
 
 function getImageUrl(img?: string) {
@@ -56,33 +20,22 @@ function getImageUrl(img?: string) {
   return `${A}/${img}`
 }
 
-function parseNutrients(nutrientsValue?: string, category?: string): string[] {
-  if (nutrientsValue && nutrientsValue.trim()) {
-    return nutrientsValue
-      .split(/[,;\n]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
+/** Parses admin-provided nutrients value into individual badges; returns empty array if none provided. */
+function parseNutrients(nutrientsValue?: string): string[] {
+  if (!nutrientsValue || !nutrientsValue.trim()) {
+    return []
   }
-  const isSweet = (category || "").toLowerCase().includes("sweet")
-  if (isSweet) {
-    return ["Sweetness 50%", "Spicy 60%"]
-  }
-  return ["100% Organic", "Pure Extract", "Eco Friendly"]
-}
-
-function getFallbackDescription(name: string, category?: string): string {
-  const isSweet = (category || "").toLowerCase().includes("sweet")
-  if (isSweet) {
-    return `Indulge in the authentic taste of our ${name}, handcrafted from pure grated coconuts freshly harvested from our coastal orchards. Prepared following traditional time-honored recipes, this sweet treat captures the rich natural aroma, wholesome sweetness, and velvety texture that brings genuine festive joy to your family.`
-  }
-  return `Discover the natural excellence of our ${name}, sustainably harvested and processed from premier coconut groves. Rich in essential bio-nutrients and minerals, it offers pristine purity, exceptional quality, and environmentally conscious nourishment for your everyday plant care and lifestyle.`
+  return nutrientsValue
+    .split(/[,;\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
 }
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [products, setProducts] = useState<ProductItem[]>(defaultProducts)
+  const [products, setProducts] = useState<ProductItem[]>(fallbackProducts)
   const [product, setProduct] = useState<ProductItem | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -91,7 +44,7 @@ export default function ProductDetail() {
     window.scrollTo(0, 0)
   }, [id])
 
-  // Fetch product list and current product
+  // Fetch product list and current product from live API
   useEffect(() => {
     let active = true
 
@@ -101,15 +54,15 @@ export default function ProductDetail() {
         const all = await fetchProducts().catch(() => [])
         if (!active) return
 
-        const activeList = all && all.length > 0 ? all : defaultProducts
+        const activeList = all && all.length > 0 ? all : fallbackProducts
         setProducts(activeList)
 
-        // Try to find by id in loaded list
+        // Try to find product by id or slug
         let matched = activeList.find(
           (p) => p._id === id || p.name.toLowerCase().replace(/\s+/g, "-") === id?.toLowerCase()
         )
 
-        // If not found in list, attempt specific fetch
+        // If not found in loaded array, attempt direct single product fetch by ID
         if (!matched && id && !id.startsWith("init-")) {
           try {
             const single = await fetchProductById(id)
@@ -121,7 +74,7 @@ export default function ProductDetail() {
           }
         }
 
-        // Fallback to first product if invalid id
+        // If still not matched, fallback to first item
         if (!matched && activeList.length > 0) {
           matched = activeList[0]
         }
@@ -130,9 +83,9 @@ export default function ProductDetail() {
           setProduct(matched || null)
         }
       } catch {
-        if (active && defaultProducts.length > 0) {
-          setProducts(defaultProducts)
-          setProduct(defaultProducts[0])
+        if (active && fallbackProducts.length > 0) {
+          setProducts(fallbackProducts)
+          setProduct(fallbackProducts[0])
         }
       } finally {
         if (active) setLoading(false)
@@ -163,14 +116,16 @@ export default function ProductDetail() {
     return (
       <div id="top" className="site-shell min-h-screen bg-[#fdffe2]">
         <Menu />
-        <div className="flex flex-col items-center justify-center py-40 gap-4">
-          <svg className="animate-spin h-9 w-9 text-[#007b5f]" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          <span className="text-sm font-semibold tracking-wider text-[#007b5f] uppercase">
-            Loading Product Details...
-          </span>
+        <div style={{ paddingTop: "clamp(120px, 14vw, 170px)", paddingBottom: "100px", textAlign: "center" }}>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <svg className="animate-spin h-9 w-9 text-[#007b5f]" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            <span className="text-sm font-semibold tracking-wider text-[#007b5f] uppercase">
+              Loading Product Details...
+            </span>
+          </div>
         </div>
         <Footer />
       </div>
@@ -181,7 +136,10 @@ export default function ProductDetail() {
     return (
       <div id="top" className="site-shell min-h-screen bg-[#fdffe2]">
         <Menu />
-        <main className="section-pad text-center py-32">
+        <main
+          className="section-pad text-center"
+          style={{ paddingTop: "clamp(120px, 14vw, 170px)", paddingBottom: "100px" }}
+        >
           <h2 style={{ fontFamily: "var(--serif)" }} className="text-4xl text-[#007b5f] mb-4">
             Product Not Found
           </h2>
@@ -197,34 +155,52 @@ export default function ProductDetail() {
     )
   }
 
-  const nutrientBadges = parseNutrients(product.nutrientsValue, product.category || product.type)
-  const descriptionText = product.description || getFallbackDescription(product.name, product.category || product.type)
+  // Only parse nutrients if admin provided them
+  const nutrientBadges = parseNutrients(product.nutrientsValue)
+  const hasDescription = Boolean(product.description && product.description.trim())
 
   return (
     <div id="top" className="site-shell min-h-screen bg-[#fdffe2]">
       {/* Header Menu */}
       <Menu />
 
-      <main className="section-pad" style={{ marginTop: "32px", paddingBottom: "80px" }}>
+      {/* Main section: paddingTop clears the fixed navbar completely */}
+      <main
+        className="section-pad"
+        style={{
+          paddingTop: "clamp(120px, 14vw, 170px)",
+          paddingBottom: "80px",
+        }}
+      >
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 clamp(16px, 3vw, 40px)" }}>
-          {/* Breadcrumb Navigation */}
-          <div style={{ marginBottom: "clamp(24px, 3vw, 40px)" }}>
+          {/* Back to Products button: Positioned clearly below navbar */}
+          <div style={{ marginBottom: "clamp(24px, 3.5vw, 44px)" }}>
             <Link
               to="/our-product"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
+                padding: "10px 20px",
+                borderRadius: "9999px",
+                border: "1.5px solid var(--green)",
+                background: "transparent",
                 color: "var(--green)",
                 fontSize: "14px",
                 fontWeight: 600,
                 textDecoration: "none",
-                transition: "opacity 0.2s",
+                transition: "all 0.25s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.75")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--green)"
+                e.currentTarget.style.color = "var(--cream)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent"
+                e.currentTarget.style.color = "var(--green)"
+              }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <span>Back to Products</span>
@@ -307,61 +283,71 @@ export default function ProductDetail() {
                 {product.name}
               </h1>
 
-              {/* Description */}
-              <div
-                style={{
-                  marginTop: "clamp(18px, 2.5vw, 28px)",
-                  fontSize: "clamp(15px, 1.15vw, 17px)",
-                  lineHeight: 1.8,
-                  color: "rgba(0, 50, 38, 0.88)",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                {descriptionText}
-              </div>
-
-              {/* Nutrients Value Section */}
-              <div style={{ marginTop: "clamp(28px, 4vw, 44px)" }}>
-                <h2
+              {/* Description: ONLY displayed if admin entered it; NO dummy data */}
+              {hasDescription && (
+                <div
                   style={{
-                    fontFamily: "var(--serif)",
-                    fontSize: "clamp(26px, 2.5vw, 36px)",
-                    fontWeight: 400,
-                    color: "var(--green)",
-                    margin: "0 0 16px 0",
+                    marginTop: "clamp(18px, 2.5vw, 28px)",
+                    fontSize: "clamp(15px, 1.15vw, 17px)",
+                    lineHeight: 1.8,
+                    color: "rgba(0, 50, 38, 0.88)",
+                    whiteSpace: "pre-line",
                   }}
                 >
-                  Nutrients Value
-                </h2>
-
-                {/* Nutrient Badges */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                  {nutrientBadges.map((badge, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "8px 18px",
-                        background: "var(--green)",
-                        color: "var(--cream)",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        borderRadius: "4px",
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      {badge}
-                    </span>
-                  ))}
+                  {product.description?.trim()}
                 </div>
-              </div>
+              )}
+
+              {/* Nutrients Value: ONLY displayed if admin entered it; NO dummy data */}
+              {nutrientBadges.length > 0 && (
+                <div style={{ marginTop: hasDescription ? "clamp(28px, 4vw, 44px)" : "24px" }}>
+                  <h2
+                    style={{
+                      fontFamily: "var(--serif)",
+                      fontSize: "clamp(26px, 2.5vw, 36px)",
+                      fontWeight: 400,
+                      color: "var(--green)",
+                      margin: "0 0 16px 0",
+                    }}
+                  >
+                    Nutrients Value
+                  </h2>
+
+                  {/* Nutrient Badges entered by admin */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                    {nutrientBadges.map((badge, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "8px 18px",
+                          background: "var(--green)",
+                          color: "var(--cream)",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          borderRadius: "4px",
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Related Products Section */}
           {relatedProducts.length > 0 && (
-            <div style={{ marginTop: "clamp(60px, 8vw, 110px)", paddingTop: "clamp(40px, 5vw, 60px)", borderTop: "1px solid rgba(0, 123, 95, 0.15)" }}>
+            <div
+              style={{
+                marginTop: "clamp(60px, 8vw, 110px)",
+                paddingTop: "clamp(40px, 5vw, 60px)",
+                borderTop: "1px solid rgba(0, 123, 95, 0.15)",
+              }}
+            >
               <h2
                 style={{
                   fontFamily: "var(--serif)",
@@ -374,7 +360,7 @@ export default function ProductDetail() {
                 Related Product
               </h2>
 
-              {/* Related Product Cards Grid matching reference image */}
+              {/* Related Product Cards Grid */}
               <div
                 style={{
                   display: "grid",
