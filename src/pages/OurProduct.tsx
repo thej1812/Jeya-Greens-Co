@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Link } from "react-router-dom"
 import Menu from "../components/Menu"
 
 import { fetchProducts, ProductItem } from "../services/api"
@@ -232,9 +233,11 @@ export default function OurProduct() {
               </div>
             ) : (
               displayedProducts.map((product, index) => (
-                <article
+                <Link
+                  to={`/product/${product._id}`}
                   className="product-card"
                   key={product._id || product.name}
+                  style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
                 >
                   <img
                     src={
@@ -259,7 +262,7 @@ export default function OurProduct() {
                   <span className="product-index">
                     0{index + 1}
                   </span>
-                </article>
+                </Link>
               ))
             )}
 

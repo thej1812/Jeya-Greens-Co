@@ -28,10 +28,38 @@ const possibleDirs = [
 const assetsDir = possibleDirs.find((p) => fsSync.existsSync(p)) || possibleDirs[0]
 
 export const initialProducts = [
-  { name: "Coconut Burfi", type: "Sweet", file: "fe393.png" },
-  { name: "Coconut Laddu", type: "Sweet", file: "736d2.png" },
-  { name: "Coconut Oil", type: "Plant Care", file: "e7e2a.png" },
-  { name: "Coconut Water", type: "Plant Care", file: "d452e.png" },
+  {
+    name: "Coconut Burfi",
+    type: "Sweet",
+    file: "fe393.png",
+    description:
+      "Traditional south Indian delicacy made with freshly grated coconut, aromatic cardamom, and pure cane sugar. Soft, melt-in-the-mouth texture offering authentic festive sweetness.",
+    nutrientsValue: "Sweetness 45%, Energy 140kcal",
+  },
+  {
+    name: "Coconut Laddu",
+    type: "Sweet",
+    file: "736d2.png",
+    description:
+      "Handcrafted golden coconut laddus prepared with roasted coconut flakes and organic condensed milk. A wholesome, energy-boosting treat perfect for any occasion.",
+    nutrientsValue: "Sweetness 50%, Fiber 15%",
+  },
+  {
+    name: "Coconut Oil",
+    type: "Plant Care",
+    file: "e7e2a.png",
+    description:
+      "Cold-pressed extra virgin coconut oil extracted from fresh coconut milk without heat or chemical refining. Highly nourishing for plant vitality, organic soil health, and eco-friendly conditioning.",
+    nutrientsValue: "100% Pure, Zero Chemicals",
+  },
+  {
+    name: "Coconut Water",
+    type: "Plant Care",
+    file: "d452e.png",
+    description:
+      "Pure, electrolyte-rich tender coconut water tapped straight from fresh green coconuts. Natural plant growth stimulant packed with natural cytokinins, potassium, and active bio-nutrients.",
+    nutrientsValue: "Hydration 95%, Minerals 80%",
+  },
 ]
 
 export const initialCategories = ["Sweet", "Plant Care"]
@@ -90,6 +118,8 @@ export async function seedInitialProducts() {
       name: item.name,
       type: item.type,
       category: item.type,
+      description: item.description || "",
+      nutrientsValue: item.nutrientsValue || "",
       image: uploadResult.url,
       imagePublicId: uploadResult.publicId,
     })

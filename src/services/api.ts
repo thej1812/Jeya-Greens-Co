@@ -48,6 +48,8 @@ export interface ProductItem {
   name: string
   type: string
   category?: string
+  description?: string
+  nutrientsValue?: string
   image: string
   imagePublicId?: string
   createdAt?: string
@@ -104,6 +106,17 @@ export async function fetchProducts(): Promise<ProductItem[]> {
   }
   const json: ApiResponse<ProductItem[]> = await res.json()
   return json.data || []
+}
+
+export async function fetchProductById(id: string): Promise<ProductItem> {
+  const res = await fetch(`${API_BASE}/products/${id}`, {
+    headers: { Accept: "application/json" },
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to load product (HTTP ${res.status})`)
+  }
+  const json: ApiResponse<ProductItem> = await res.json()
+  return json.data
 }
 
 export async function fetchGallery(): Promise<GalleryItem[]> {

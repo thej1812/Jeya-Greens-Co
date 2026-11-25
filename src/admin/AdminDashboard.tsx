@@ -36,6 +36,8 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null)
   const [productName, setProductName] = useState("")
   const [productType, setProductType] = useState("Sweet")
+  const [productDescription, setProductDescription] = useState("")
+  const [productNutrientsValue, setProductNutrientsValue] = useState("")
   const [isCustomCategory, setIsCustomCategory] = useState(false)
   const [customCategoryInput, setCustomCategoryInput] = useState("")
   const [productFile, setProductFile] = useState<File | null>(null)
@@ -157,6 +159,8 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     setEditingProduct(null)
     setProductName("")
     setProductType(existingCategories[0] || "Sweet")
+    setProductDescription("")
+    setProductNutrientsValue("")
     setIsCustomCategory(false)
     setCustomCategoryInput("")
     setProductFile(null)
@@ -170,6 +174,8 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
     setProductName(product.name)
     const currentCat = (product.category || product.type || "Sweet").trim()
     setProductType(currentCat)
+    setProductDescription(product.description || "")
+    setProductNutrientsValue(product.nutrientsValue || "")
     setIsCustomCategory(false)
     setCustomCategoryInput("")
     setProductFile(null)
@@ -210,6 +216,8 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
       formData.append("name", productName.trim())
       formData.append("type", finalCategory)
       formData.append("category", finalCategory)
+      formData.append("description", productDescription.trim())
+      formData.append("nutrientsValue", productNutrientsValue.trim())
       if (productFile) {
         formData.append("image", productFile)
       }
@@ -643,6 +651,40 @@ export default function AdminDashboard({ adminUsername, onLogout, onBackToSite }
                           {(isCustomCategory ? customCategoryInput.trim() : productType) || "None"}
                         </span>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="prod-desc">
+                        Product Description (Detail Page)
+                      </label>
+                      <textarea
+                        id="prod-desc"
+                        rows={4}
+                        value={productDescription}
+                        onChange={(e) => setProductDescription(e.target.value)}
+                        placeholder="Detailed product story, origin, flavor notes, and highlights..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Shown when customers click on the product to view its dedicated page.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" htmlFor="prod-nutrients">
+                        Nutrients Value / Badges (Optional)
+                      </label>
+                      <input
+                        id="prod-nutrients"
+                        type="text"
+                        value={productNutrientsValue}
+                        onChange={(e) => setProductNutrientsValue(e.target.value)}
+                        placeholder="e.g. Sweetness 50%, Spicy 60% (comma-separated badges)"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#007b5f]/20 focus:border-[#007b5f] text-base sm:text-sm"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Displayed as value pills under Nutrients Value on the product page.
+                      </p>
                     </div>
 
                     <div>

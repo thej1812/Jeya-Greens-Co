@@ -1,6 +1,11 @@
 import mongoose from "mongoose"
 
-export const PRODUCT_LIMITS = { name: 100, type: 50 }
+export const PRODUCT_LIMITS = {
+  name: 100,
+  type: 50,
+  description: 3000,
+  nutrientsValue: 500,
+}
 
 const productSchema = new mongoose.Schema(
   {
@@ -20,6 +25,18 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: PRODUCT_LIMITS.type,
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: PRODUCT_LIMITS.description,
+      default: "",
+    },
+    nutrientsValue: {
+      type: String,
+      trim: true,
+      maxlength: PRODUCT_LIMITS.nutrientsValue,
+      default: "",
     },
     image: {
       type: String,

@@ -9,6 +9,8 @@ const baseController = imageResourceController({
   fields: {
     name: { label: "Product name", max: PRODUCT_LIMITS.name },
     type: { label: "Product category", max: PRODUCT_LIMITS.type },
+    description: { label: "Product description", max: PRODUCT_LIMITS.description, optional: true },
+    nutrientsValue: { label: "Nutrients value", max: PRODUCT_LIMITS.nutrientsValue, optional: true },
   },
 })
 

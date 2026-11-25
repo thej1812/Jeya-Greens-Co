@@ -11,6 +11,7 @@ import Review from "./pages/Review"
 import Menu from "./components/Menu"
 import Footer from "./components/Footer"
 import Contact from "./pages/Contact"
+import ProductDetail from "./pages/ProductDetail"
 import {
   fetchProducts,
   fetchGallery,
@@ -186,6 +187,8 @@ export default function App() {
         <Route path="/gallery" element={<OurGallery />} />
         <Route path="/reviews" element={<Review />} />
            <Route path="/contact" element={<Contact />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
         {/* Gallery page route: import your Gallery page, then uncomment
         <Route path="/gallery" element={<Gallery />} /> */}
         {/* Add more pages here, e.g.
@@ -596,7 +599,13 @@ into VCO and healthy coconut beverages, and wholesome snacks.
               </div>
             ) : (
               displayedProducts.map((product, index) => (
-                <article className="product-card" data-reveal key={product._id || product.name}>
+                <Link
+                  to={`/product/${product._id}`}
+                  className="product-card"
+                  data-reveal
+                  key={product._id || product.name}
+                  style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
+                >
                   <img
                     src={product.image.startsWith("http") ? product.image : `${A}/${product.image}`}
                     alt={product.name}
@@ -612,7 +621,7 @@ into VCO and healthy coconut beverages, and wholesome snacks.
                   </div>
 
                   <span className="product-index">0{index + 1}</span>
-                </article>
+                </Link>
               ))
             )}
           </div>
