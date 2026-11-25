@@ -20,27 +20,24 @@ export default function AboutUs() {
           </h2>
 
           <div className="story-copy">
-            <p>
-              Jeya Greens & Co. began with a simple yet powerful belief:
-              bringing the natural goodness of coconuts directly from
-              trusted farms to every family's home. Inspired by traditional
-              agricultural heritage, we started our journey with a commitment
-              to purity, quality, and authentic flavours.
+           <p>
+              At <strong>Jeya Greens &amp; Co</strong>, Our journey began with a simple yet powerful mission: to
+bring the purest, most authentic gifts of nature directly from the farm to your family&#39;s
+table. Inspired by traditional agricultural heritage, we set out to craft coconut and
+food essentials that honor natural goodness without compromise.
             </p>
-
             <p>
-              What began with producing pure, cold-pressed Virgin Coconut Oil
-              gradually grew into a diverse range of coconut-based products,
-              including traditional sweets, healthy beverages, and everyday
-              essentials. Every product reflects our dedication to preserving
-              nature's goodness and celebrating timeless traditions.
+              It all began with a simple commitment to purity extracting cold-pressed Virgin
+Coconut Oil the way nature intended, without compromises or chemical shortcuts.
+But as our roots took hold, so did a bigger vision: to bring that same unadulterated
+goodness to every corner of your kitchen.
             </p>
-
             <p>
-              At Jeya Greens & Co., we believe that good food begins with
-              honest ingredients. Our journey is driven by quality,
-              authenticity, and the passion to bring natural coconut goodness
-              closer to every home.
+              We believe that good health starts with honest food. That is why our products remain
+free from artificial additives, preserving the essential antioxidants, healthy medium-
+chain fats, and natural flavors that nature intended. At JEYA GREENS &amp; CO, we
+aren&#39;t just making food; we are creating a healthier, higher-quality lifestyle for
+generations to come.
             </p>
           </div>
 
@@ -48,7 +45,7 @@ export default function AboutUs() {
             <p className="founder-label">Founder</p>
 
             <img
-              src={`${A}/72a88.png`}
+              src={`${A}/founder.jpeg`}
               alt="Founder of Jeya Greens as a young man"
             />
 
@@ -65,11 +62,7 @@ export default function AboutUs() {
           <h2 className="mission-title">Our Mission</h2>
 
           <p className="mission-copy">
-            Our mission is to deliver pure, high-quality coconut products
-            that bring natural goodness to everyday life. From cold-pressed
-            coconut oil to delicious traditional sweets and healthy
-            essentials, we are committed to maintaining quality at every
-            step while preserving authentic flavours and traditional values.
+           From cold-pressed coconut oil to delicious traditional sweets and healthy essentials, we are committed to maintaining quality at every step while preserving traditional flavours and timeless values.
           </p>
         </section>
 
@@ -78,12 +71,7 @@ export default function AboutUs() {
           <h2 className="vision-title">Our Vision</h2>
 
           <p className="vision-copy">
-            Our vision is to become a trusted name in natural coconut-based
-            products by bringing the goodness of coconuts to every home.
-            We aspire to preserve traditional flavours, support quality
-            agricultural practices, and create a diverse range of products
-            that make natural and authentic living a part of everyday life.
-          </p>
+            We aspire to preserve traditional flavours, support quality agricultural practices, and create a diverse range of products that make natural goodness and traditional living a part of everyday life.</p>
         </section>
       </main>
 

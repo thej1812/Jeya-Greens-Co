@@ -127,7 +127,7 @@ export default function Menu() {
     >
       <BrandLogo />
       <nav className="desktop-nav" aria-label="Primary navigation">
-        <a href="/our-product" {...navLink("products")}>Product</a>
+        <a href="/our-product" {...navLink("products")}>Products</a>
         <a href="/about-us" {...navLink("story")}>About Us</a>
 
         <a href="/gallery" {...navLink("gallery")}>Gallery</a>
