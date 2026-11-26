@@ -181,24 +181,13 @@ export default function ProductDetail() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                padding: "10px 20px",
-                borderRadius: "9999px",
-                border: "1.5px solid var(--green)",
-                background: "transparent",
-                color: "var(--green)",
+                
                 fontSize: "14px",
                 fontWeight: 600,
                 textDecoration: "none",
                 transition: "all 0.25s ease",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--green)"
-                e.currentTarget.style.color = "var(--cream)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent"
-                e.currentTarget.style.color = "var(--green)"
-              }}
+              
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -221,15 +210,12 @@ export default function ProductDetail() {
               style={{
                 position: "relative",
                 width: "100%",
-                aspectRatio: "0.85",
-                borderRadius: "16px",
+                border:"0px",
                 overflow: "hidden",
-                background: "linear-gradient(180deg, #f7f3e8 0%, #ebe4d0 100%)",
-                boxShadow: "0 10px 30px rgba(0, 50, 38, 0.08)",
+               borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "clamp(20px, 3vw, 40px)",
               }}
             >
               {/* Category Pill Tag */}
@@ -408,7 +394,7 @@ export default function ProductDetail() {
       </main>
 
       {/* Footer */}
-      <Footer />
+     
     </div>
   )
 }

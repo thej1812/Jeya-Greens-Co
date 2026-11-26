@@ -152,7 +152,7 @@ export default function OurGallery() {
       {/* ===== GALLERY: one by one boxes ===== */}
       <main>
         <section id="gallery" className="gallery section-pad" style={{ marginTop: "52px" }}>
-          <h2>Our Gallery</h2>
+          <h2 style={{ marginBottom: "20px" }}>Our Gallery</h2>
 
           {/* Split Filter Button matching Our Products Category button */}
           <div className="split-wrap" ref={filterWrapRef} style={{ margin: "4px auto clamp(24px, 3vw, 42px)" }}>

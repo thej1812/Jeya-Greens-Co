@@ -163,7 +163,7 @@ export default function Contact() {
 
       <main className="contact-page section-pad">
         <header className="contact-hero">
-          <p className="contact-eyebrow">Rooted in goodness. Here for you.</p>
+        
           <h1>Let’s grow a conversation.</h1>
           <p className="contact-sub">
             From coconut goodness to everyday questions, we’d love to hear from you.

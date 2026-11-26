@@ -419,7 +419,7 @@ function PublicWebsite() {
     if (gallery.length < 2) return
     const timer = window.setTimeout(() => {
       setGalleryIndex((i) => (i + 1) % gallery.length)
-    }, 2000)
+    }, 8000)
     return () => window.clearTimeout(timer)
   }, [galleryIndex, gallery.length])
 

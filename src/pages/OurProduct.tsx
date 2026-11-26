@@ -117,10 +117,10 @@ export default function OurProduct() {
       <main>
         {/* ---------- PRODUCTS ---------- */}
         <section
-          id="products"
-          className="products section-pad"
-          style={{ marginTop: "52px" }}
-        >
+  id="products"
+  className="products section-pad our-product-page"
+  style={{ marginTop: "52px" }}
+>
           <div className="section-head">
             <h2>Our Products</h2>
 
@@ -199,7 +199,7 @@ export default function OurProduct() {
           </div>
 
           {/* ---------- PRODUCT GRID ---------- */}
-          <div id="product-grid" className="product-grid">
+          <div id="product-grids" className="product-grids">
 
             {displayedProducts.length === 0 ? (
               <div
