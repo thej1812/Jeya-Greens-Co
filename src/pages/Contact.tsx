@@ -158,7 +158,7 @@ export default function Contact() {
   }
 
   return (
-    <div className="site-shell">
+    <div id="contact" className="site-shell">
       <Menu />
 
       <main className="contact-page section-pad">

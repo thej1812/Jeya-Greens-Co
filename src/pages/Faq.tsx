@@ -32,7 +32,7 @@ export default function FAQ() {
   const [openFaq, setOpenFaq] = useState<number>(0)
 
   return (
-    <div className="faq-page">
+    <div id="faq" className="faq-page">
 
       {/* MENU */}
       <Menu />

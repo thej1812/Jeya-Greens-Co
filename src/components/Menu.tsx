@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import BrandLogo from "./BrandLogo"
 
 // Sections that can be highlighted in the navigation (order = page order)
-const NAV_SECTION_IDS = ["products", "story", "process", "gallery", "contact"]
+const NAV_SECTION_IDS = ["products", "story", "faq", "gallery", "contact","reviews"]
 
 export default function Menu() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -132,7 +132,7 @@ export default function Menu() {
 
         <a href="/gallery" {...navLink("gallery")}>Gallery</a>
                 <a href="/reviews" {...navLink("reviews")}>Testimonials</a>
-        <a href="/faq" {...navLink("process")}>FAQ</a>
+        <a href="/faq" {...navLink("faq")}>FAQ</a>
         
 
 
@@ -169,7 +169,7 @@ export default function Menu() {
             Testimonials
           </a>
 
-          <a href="/faq" onClick={closeMenu} {...navLink("process")}>
+          <a href="/faq" onClick={closeMenu} {...navLink("faq")}>
             FAQ
           </a>
           
