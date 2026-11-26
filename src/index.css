@@ -698,7 +698,7 @@ left: calc(var(--cx) - 14% - .02 * var(--bw));  width: var(--bw); max-width: non
   background: var(--green);
   color: var(--cream);
   text-align: left;
-  border-radius: 16px;
+  border-radius: 8px;
 }
 .gallery-panel-text p {
   font-size: clamp(14px, 1.1vw, 20px);
